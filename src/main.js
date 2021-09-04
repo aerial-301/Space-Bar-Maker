@@ -115,6 +115,7 @@ let removed = false
 
 let debug1
 let debug2
+let debug3
 
 
 export let uiElements = []
@@ -133,8 +134,6 @@ export function setPos(element, p1, p2, xOffset = 0, yOffset = 0) {
   element.y = mainCanvas.height * p2 + yOffset
 }
 
-
-
 export function adjustElement(e, w, h, tx, ty) {
   setSize(e, w, h)
   if (e.text) {
@@ -149,43 +148,42 @@ function buttonPress(b) {
 }
 
 function removeElement(n) {
-  if (elementsCanMove) {
-
+  if (elementsCanMove && !pushed) {
     const index = mainBelt.length - n
-    if (mainBelt[index]) {
-      mainBelt[index].visible = false
-      mainBelt[index].removed = true
+    const item = mainBelt[index]
+    if (item) {
+      g.removeItem(mainBelt, item)
+      item.visible = false
     }
   }
 }
 
-function addElement() {
+function addElement(x = 40, y = buttons[0].y - 50) {
   const randomElement = nonSolids[g.randomNum(0, nonSolids.length)]
-  const t = g.makeText(uiLayer, randomElement, '', '#FFF', 50, 250)
-  // t.removed = false
+  const t = g.makeText(uiLayer, randomElement, 18, '#FFF', x, y)
+  t.adjust = () => {
+
+    // t.y = uiElements[0]. y - 50
+    // if (DynamicSize) adjustElement(button, width, height, textX, textY)
+    // if (DynamicPos) setPos(button, xPer, yPer, xOff, -button.height)
+  }
   mainBelt.unshift(t)
+  uiElements.push(t)
 }
 
-
-
-
-function moveElements() {
+function moveElements(n = 0) {
   if (elementsCanMove) {
     elementsCanMove = false
-    for (const item of mainBelt) {
-      if (item.removed) {
-        g.removeItem(mainBelt, item)
-        // removed = true
-        continue
-      }
-      if (!removed) movingElements.push(item)
+    const index = mainBelt.length - n
+
+    for (let i = 0; i < index; i++) {
+      movingElements.push(mainBelt[i])
     }
+
     moveElementsNOW()
   }
   
 }
-
-// removed = false
 
 function moveElementsNOW() {
     for (const item of movingElements) {
@@ -198,7 +196,6 @@ function moveElementsNOW() {
       shiftAmount = 0
       
       addElement()
-      elementsCanMove = true
       if (pushed) {
         if (inserted < 2) {
           inserted += 1
@@ -207,9 +204,13 @@ function moveElementsNOW() {
         } else {
           pushed = false
           inserted = 0
+          elementsCanMove = true
           movingElements.length = 0
         }
-      } else movingElements.length = 0
+      } else {
+        elementsCanMove = true
+        movingElements.length = 0
+      }
     }
     shiftAmount += 2
   // }
@@ -218,82 +219,81 @@ function moveElementsNOW() {
 function mainMenu(){
   initCanvasEvents()
   initLayers()
-  menu = g.simpleButton('>', 0, 1, 0, .4, .4, () => {
-    moveElements()
-    buttonPress(menu)
-  }, .15, .1)
+  // menu = g.simpleButton('>', 0, 1, 0, .4, .4, () => {
+  //   // if (!mainBelt.length) addElement()
+  //   // else moveElements()
+  //   // buttonPress(menu)
+  // }, .15, .1)
   
-  const r1 = g.simpleButton('R1', .15, 1, 0, .21, .4, () => {
+  const r1 = g.simpleButton('discard', .15, 1, 0, .21, .4, () => {
     removeElement(3)
-    moveElements()
+    moveElements(2)
     buttonPress(r1)
   }, .2, .1)
 
-  const r2 = g.simpleButton('R2', .35, 1, 0, .15, .4, () => {
+  const r2 = g.simpleButton('remove', .35, 1, 0, .15, .4, () => {
     removeElement(2)
-    moveElements()
+    moveElements(1)
     buttonPress(r2)
   }, .2, .1)
 
-  const r3 = g.simpleButton('R3', .55, 1, 0, .15, .4, () => {
-    removeElement(1)
-    moveElements()
+  const r3 = g.simpleButton('delete', .55, 1, 0, .15, .4, () => {
+    if (elementsCanMove && !pushed) {
+      mainBelt.pop().visible = false
+      moveElements(0)
+    }
     buttonPress(r3)
   }, .2, .1)
 
-
-
-
   g.simpleButton('OK', .75, 1, 0, .25, .4, () => {
 
-    if (!pushed) {
+    if (elementsCanMove && !pushed) {
       pushed = true
 
       const l = mainBelt.length
       for (let i = 1; i < 4; i++) {
-        console.log(mainBelt[l - i].content)
-        mainBelt[l - i].removed = true
-        products.push(mainBelt[l - i])
+        const item = mainBelt[l - i]
+        g.removeItem(mainBelt, item)
+        products.push(item)
       }
       
       
       products.forEach(p => p.y -= 40)
-      // mainBelt[l - i].y -= 40
       moveElements()
     }
     
   }, .24, .1)
 
-  const squareWidth = 100
-  const squareHeight = 100
-
+  // const squareWidth = 100
+  // const squareHeight = 100
+  
   uiElements.forEach(e => e.adjust())
+
+
+
+  for (let i = 0; i < 10; i++) {
+    addElement(40 * (10 - i))
+  }
+  
   setup()
 }
 
-
-debug1 = g.makeText(g.stage, 'text 1', '', '#FFF')
-debug2 = g.makeText(g.stage, 'text 2', '', '#FFF', 0, 100)
+// debug1 = g.makeText(g.stage, 'text 1', '', '#FFF')
+// debug2 = g.makeText(g.stage, 'text 2', '', '#FFF', 0, 50)
+// debug3 = g.makeText(g.stage, 'text 2', '', '#FFF', 0, 100)
 
 function setup(){
-
   initMap()
-
-  addElement()
-  // for (let i = 0; i < 10; i++) {
-    moveElements()
-  // }
   g.state = play
 }
 
-
-
-
 function play(){
 
-  debug1.content = `mainBelt = ${mainBelt.length}`
+  // debug1.content = `mainBelt = ${mainBelt.length}`
 
-  debug2.content = `products = ${products.length}`
+  // debug2.content = `products = ${products.length}`
+
+  // debug3.content = `movings = ${movingElements.length}`
 
   // if (mainBelt.length < 10) {
   //   addElement()

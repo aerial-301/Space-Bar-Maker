@@ -424,10 +424,10 @@ export let GA = {
       o.yellowHB.visible = false
     }
 
-    g.makeText = (parent, content, font, fillStyle, x = 0, y = 0) => {
+    g.makeText = (parent, content, fontSize, fillStyle, x = 0, y = 0) => {
       const o = {
         content: content,
-        font: font || "32px sans-serif",
+        font: `small-caps ${fontSize}px sans-serif`,
         fs: fillStyle,
         textBaseline: "top",
         render(c) {
@@ -471,7 +471,7 @@ export let GA = {
 
       if (text) {
         const tSize = size
-        button.text = g.makeText(button, text, `${tSize}px arial`, '#FFF')
+        button.text = g.makeText(button, text, tSize, '#FFF')
       }
         
       button.adjust = () => {
