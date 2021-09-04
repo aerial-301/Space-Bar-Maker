@@ -1,5 +1,9 @@
 // import { world } from './main/mainSetUp/initLayers.js'
 
+import { adjustElement, setPos, uiElements } from "./main.js"
+import { buttons } from "./main/mainSetUp/initBottomPanel.js"
+import { uiLayer } from "./main/mainSetUp/initLayers.js"
+
 export let GA = {
   create(setup) {
     let g = {}
@@ -19,7 +23,7 @@ export let GA = {
 
     g.setCanvasSize = () => {
       g.canvas.width = window.innerWidth
-      g.canvas.height = window.innerHeight - 10
+      g.canvas.height = window.innerHeight - 15
     }
 
     g.setCanvasSize()
@@ -37,7 +41,8 @@ export let GA = {
       g.stage.children.forEach(c => displaySprite(c))
       function displaySprite(s) {
 
-        if (s.alwaysVisible || s.visible && s.gx < canvas.width + s.width && s.gx + s.width >= -s.width && s.gy < canvas.height + s.height && s.gy + s.height >= -s.height) {
+        // if (s.alwaysVisible || s.visible && s.gx < canvas.width + s.width && s.gx + s.width >= -s.width && s.gy < canvas.height + s.height && s.gy + s.height >= -s.height) {
+        if (s.alwaysVisible || s.visible) {
           ctx.save()
           if (g.interpolate) {
             if (s._previousX !== undefined) s.renderX = (s.x - s._previousX) * lagOffset + s._previousX
@@ -45,14 +50,14 @@ export let GA = {
             if (s._previousY !== undefined) s.renderY = (s.y - s._previousY) * lagOffset + s._previousY
             else s.renderY = s.y
           } else {
-            s.renderX = s.x
-            s.renderY = s.y
+          s.renderX = s.x
+          s.renderY = s.y
           }
           ctx.translate(s.renderX + (s.width * s.pivotX), s.renderY + (s.height * s.pivotY))
           ctx.globalAlpha = s.alpha
           ctx.rotate(s.rotation)
-          ctx.scale(s.scaleX, s.scaleY)
-          if (s.blendMode)  ctx.globalCompositeOperation = s.blendMode;
+          // ctx.scale(s.scaleX, s.scaleY)
+          // if (s.blendMode)  ctx.globalCompositeOperation = s.blendMode;
           if (s.render) s.render(ctx)
           if (s.children && s.children.length > 0) {
             ctx.translate(-s.width * s.pivotX, -s.height * s.pivotY)
@@ -419,7 +424,7 @@ export let GA = {
       o.yellowHB.visible = false
     }
 
-    g.makeText = (parent, content, font, fillStyle, x, y) => {
+    g.makeText = (parent, content, font, fillStyle, x = 0, y = 0) => {
       const o = {
         content: content,
         font: font || "32px sans-serif",
@@ -442,21 +447,40 @@ export let GA = {
 
     g.simpleButton = (
       text,
-      xPos = 10,
-      yPos = 10,
-      textX = 10,
-      textY = 10,
-      color = '#555',
-      size = 28,
+      xPer = 0,
+      yPer = 0,
+      xOff,
+      textX = .4,
+      textY = .4,
       action = () => console.log(text),
-      width = 50,
-      height = 50
+      width = .2,
+      height = .1,
+      DynamicPos = true,
+      DynamicSize = true,
+      size = 18,
+      color = '#080'
       ) => {
-      const button = g.rectangle(width, height, color, 1, xPos, yPos)
-      if (action) button.action = action
-      const tSize = size
-      if (text ) button.text = g.makeText(button, text, `${tSize}px arial`, '#FFF', textX, textY)
-      // g.moreProperties(button)
+
+      const button = g.rectangle(width, height, color, 1, xPer, yPer)
+
+      if (action) {
+
+        buttons.push(button)
+        button.action = action
+      }
+
+      if (text) {
+        const tSize = size
+        button.text = g.makeText(button, text, `${tSize}px arial`, '#FFF')
+      }
+        
+      button.adjust = () => {
+        if (DynamicSize) adjustElement(button, width, height, textX, textY)
+        if (DynamicPos) setPos(button, xPer, yPer, xOff, -button.height)
+      }
+
+      uiElements.push(button)
+      uiLayer.addChild(button)
       return button
     }
     g.xDistance = (a, b) => Math.abs(b.centerX - a.centerX)
