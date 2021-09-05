@@ -5,40 +5,33 @@ import { canvas, initCanvasEvents } from './initCanvas.js'
 export let uiLayer, layer2, buttons = []
 
 const objects = [
-  '🎮',
-  // '🍴',
-  '🎹',
-  '🎧',
-  '🎥',
-  '🎤',
-  '🏆',
-  '💍',
-  // '📎',
-  '📏',
-  '📐',
-  '📞',
-  '📢',
-  '📷',
-  '📼',
-  '📿',
-  '🔧',
   '📌',
+  '📏',
+  '📼',
+  '🔧',
+  '📞',
   '🛒',
-  '🚲'
+  '📢',
+  '🎤',
+  '🚲',
+  '🎧',
+  '🎮',
+  '📷',
+  '🏆',
+  '💎',
 ]
 
 const nonSolids = [
-  '🍖',
-  '🍔',
-  // '🍕',
   '🍓',
-  '🍎',
+  '🍇',
+  '🍏',
   '🍉',
-  '🍅',
+  '🍖',
   '🍰',
-  '🐁',
+  '🍔',
+  '🐓',
   '🐠',
-  '🐓'
+  '🐁',
 ]
 
 const uiStuff = [
@@ -46,15 +39,11 @@ const uiStuff = [
   '⭐'
 ]
 
-const building = [
-  '🏭',
-]
-
 const movingElements = []
 
 let elementsCanMove = true
 
-
+const beltSize = 17
 const maxShift = 25
 const moveSteps = 5
 let shiftAmount = 0
@@ -113,14 +102,15 @@ let debug3
 
 let smelter
 let randomElement
-
-let finishedProduct
+let itemValue
+let index
 
 let smeltTime, currentSmeltTime
-let smelterProgressBar
 
 
 let space
+
+let spaceValue, valueText
 
 export let uiElements = []
 
@@ -143,10 +133,20 @@ function removeElement(n) {
   }
 }
 
+
+
 function addElement(x = 10, y = buttons[0].y - 50) {
-  if (Math.random() > .5) randomElement = objects[g.randomNum(0, objects.length)]
-  else randomElement = nonSolids[g.randomNum(0, nonSolids.length)]
+  if (Math.random() > .5) {
+    index = g.randomNum(0, objects.length)
+    randomElement = objects[index]
+    index += 1
+  } else {
+    index = g.randomNum(0, nonSolids.length)
+    randomElement = nonSolids[index]
+    index = (index + 1) * -1
+  }
   const t = g.makeText(uiLayer, randomElement, 18, 0, x, y)
+  t.value = index * 5
   mainBelt.unshift(t)
 }
 
@@ -214,7 +214,7 @@ function moveToSmelter() {
 
 function startSmelting() {
 
-  smeltTime = g.randomNum(50, 100)
+  smeltTime = g.randomNum(150, 400)
   currentSmeltTime = 0
   smelter.doneBar.visible = false
   
@@ -223,9 +223,14 @@ function startSmelting() {
 
   smelt()
 
-  toBeSmelted.forEach(p => g.remove(p))
+  spaceValue = 0
+
+  toBeSmelted.forEach(p => {
+    spaceValue += p.value
+    g.remove(p)
+  })
   toBeSmelted.length = 0
-  smelting = false
+  
 }
 
 function smelt() {
@@ -252,6 +257,11 @@ function eject() {
     space.x -= 5
     g.wait(1, eject)
   } else {
+    smelting = false
+    valueText.content = `value = ${spaceValue}`
+
+
+
     g.wait(500, moveUp)
     
   }
@@ -266,7 +276,7 @@ function moveUp() {
   } else {
     space.visible = false
     space.x = 310
-    space.y = 75
+    space.y = 115
   }
 }
 
@@ -274,21 +284,21 @@ function moveUp() {
 
 
 function initButtons() {
-  const buttonsHeight = 540
+  const buttonsHeight = 580
   
-  const r1 = g.simpleButton('Discard', 4, buttonsHeight, 8, 10, () => {
+  const r1 = g.simpleButton('r1', 250, buttonsHeight, 8, 10, () => {
     removeElement(3)
     moveElements(2)
     buttonPress(r1)
   })
 
-  const r2 = g.simpleButton('Remove', r1.x + r1.width + 4, buttonsHeight, 8, 10, () => {
+  const r2 = g.simpleButton('r2', r1.x + r1.width + 4, buttonsHeight, 8, 10, () => {
     removeElement(2)
     moveElements(1)
     buttonPress(r2)
   })
 
-  const r3 = g.simpleButton('Delete', r2.x + r2.width + 4, buttonsHeight, 8, 10, () => {
+  const r3 = g.simpleButton('r3', r2.x + r2.width + 4, buttonsHeight, 8, 10, () => {
     if (elementsCanMove && !pushed) {
       mainBelt.pop().visible = false
       moveElements(0)
@@ -296,7 +306,7 @@ function initButtons() {
     buttonPress(r3)
   })
 
-  const push = g.simpleButton('Push', r3.x + r3.width + 4, buttonsHeight, 8, 10, () => {
+  const push = g.simpleButton('Push', 0, buttonsHeight, 8, 10, () => {
     if (stackSize < 10) {
       if (elementsCanMove && !pushed) {
         stackSize += 1
@@ -314,7 +324,7 @@ function initButtons() {
     buttonPress(push)
   })
   
-  const smelt = g.simpleButton('Smelt', push.x + push.width + 4, buttonsHeight, 8, 10, () => {    
+  const smelt = g.simpleButton('Smelt', 80 + push.width + 4, buttonsHeight, 8, 10, () => {    
     if (stackSize == 10) {
       if (!smelting) {
 
@@ -334,6 +344,40 @@ function initButtons() {
 }
 
 
+function initEquipments() {
+
+
+
+  // smelter = g.rectangle(80, 410, '#333', 2, 305, 110)
+
+  const xPos = 25 * (beltSize - 5)
+
+  smelter = g.rectangle(80, 410, '#333', 2, xPos, 110)
+  layer2.addChild(smelter)
+
+  const smelterBarEmpty = g.rectangle(60, 20, '#000', 0, xPos + 10, 480)
+  layer2.addChild(smelterBarEmpty)
+
+  smelter.bar = g.rectangle(60, 20, '#ff0', 0, xPos + 10, 480)
+  layer2.addChild(smelter.bar)
+  
+
+  smelter.doneBar = g.rectangle(60, 20, '#0f0', 0, xPos + 10, 480)
+  layer2.addChild(smelter.doneBar)
+  // smelter.doneBar.visible = false
+
+  
+  space = g.rectangle(70, 400, '#777', 2, xPos + 5, 115)
+  // layer2.addChild(space)
+  space.visible = false
+  uiLayer.addChild(space)
+
+
+  const packaging = g.rectangle(100, 50, '#333', 1, 180, 0)
+  layer2.addChild(packaging)
+}
+
+
 function setup(){
 
   debug1 = g.makeText(g.stage, 'text 1', 20, '#FFF')
@@ -346,31 +390,17 @@ function setup(){
 
   initButtons()
 
-  
-  const packaging = g.rectangle(100, 50, '#333', 1, 180, 0)
-  layer2.addChild(packaging)
+  initEquipments()
 
-  smelter = g.rectangle(80, 410, '#222', 2, 305, 70)
-  layer2.addChild(smelter)
 
-  const smelterBarEmpty = g.rectangle(60, 20, '#000', 0, 315, 440)
-  layer2.addChild(smelterBarEmpty)
+  valueText = g.makeText(layer2, 'value = $0', 14, '#ddd', 4, 200)
 
-  smelter.bar = g.rectangle(60, 20, '#ff0', 0, 315, 440)
-  layer2.addChild(smelter.bar)
-  
 
-  smelter.doneBar = g.rectangle(60, 20, '#0f0', 0, 315, 440)
-  layer2.addChild(smelter.doneBar)
-  // smelter.doneBar.visible = false
+  // const valueDisplay = g.rectangle(160, 400, '#222', 8, 10, 100)
+  // layer2.addChild(valueDisplay)
+
 
   
-  space = g.rectangle(70, 400, '#777', 2, 310, 75)
-  space.visible = false
-  uiLayer.addChild(space)
-
-
-  const beltSize = 17
   for (let i = 0; i <= beltSize; i++) {
     addElement(10 + (25 * (beltSize - i)))
   }

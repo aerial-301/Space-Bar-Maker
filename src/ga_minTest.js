@@ -5,7 +5,7 @@ export let GA = {
   create(setup) {
     let g = {}
     g.canvas = document.getElementById('c')
-    g.canvas.style.backgroundColor = '#444'
+    g.canvas.style.backgroundColor = '#555'
     g.canvas.ctx = g.canvas.getContext("2d")
     g.stage = makeStage()
     g.pointer = makePointer()
@@ -56,7 +56,7 @@ export let GA = {
           }
           ctx.translate(s.renderX + (s.width * s.pivotX), s.renderY + (s.height * s.pivotY))
           ctx.globalAlpha = s.alpha
-          ctx.rotate(s.rotation)
+          // ctx.rotate(s.rotation)
           // ctx.scale(s.scaleX, s.scaleY)
           // if (s.blendMode)  ctx.globalCompositeOperation = s.blendMode;
           if (s.render) s.render(ctx)
@@ -442,7 +442,7 @@ export let GA = {
         } 
       }
       makeBasicObject(o, x, y, content.length, 20)
-      parent.addChild(o)
+      if (parent) parent.addChild(o)
       return o
     }
 
@@ -454,7 +454,7 @@ export let GA = {
       textY = 10,
       action = () => console.log(text),
       width = 70,
-      height = 40,
+      height = 50,
       size = 14,
       color = '#080'
       ) => {
