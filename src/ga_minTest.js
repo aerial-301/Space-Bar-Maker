@@ -1,14 +1,11 @@
-// import { world } from './main/mainSetUp/initLayers.js'
-
-import { uiElements } from "./main.js"
-import { buttons } from "./main/mainSetUp/initBottomPanel.js"
-import { uiLayer } from "./main/mainSetUp/initLayers.js"
+import { buttons, uiLayer } from "./main.js"
+// import { buttons } from "./main/mainSetUp/initBottomPanel.js"
 
 export let GA = {
   create(setup) {
     let g = {}
     g.canvas = document.getElementById('c')
-    g.canvas.style.backgroundColor = '#333'
+    g.canvas.style.backgroundColor = '#444'
     g.canvas.ctx = g.canvas.getContext("2d")
     g.stage = makeStage()
     g.pointer = makePointer()
@@ -390,7 +387,7 @@ export let GA = {
       return o
     }
 
-    g.rectangle = (w, h, k, s = 1, x = 0, y = 0) => {
+    g.rectangle = (w, h, k = '#FFF', s = 1, x = 0, y = 0) => {
       const o = {
         x: x,
         y: y,
@@ -432,7 +429,7 @@ export let GA = {
       const o = {
         content: content,
         font: `small-caps ${fontSize}px sans-serif`,
-        fs: fillStyle,
+        fs: fillStyle || '#000',
         textBaseline: "top",
         render(c) {
           c.fillStyle = this.fs
