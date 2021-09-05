@@ -1,5 +1,9 @@
 // import { world } from './main/mainSetUp/initLayers.js'
 
+import { uiElements } from "./main.js"
+import { buttons } from "./main/mainSetUp/initBottomPanel.js"
+import { uiLayer } from "./main/mainSetUp/initLayers.js"
+
 export let GA = {
   create(setup) {
     let g = {}
@@ -11,21 +15,25 @@ export let GA = {
     g.state = undefined
     g.setup = setup
     g.paused = false
-    g._fps = 30
+    g._fps = 60
     g._startTime = Date.now()
     g._frameDuration = 1000 / g._fps
     g._lag = 0
     g.interpolate = true
 
-    g.setCanvasSize = () => {
-      g.canvas.width = window.innerWidth
-      g.canvas.height = window.innerHeight - 10
-    }
+    // g.setCanvasSize = () => {
+    //   g.canvas.width = window.innerWidth
+    //   g.canvas.height = window.innerHeight - 15
+    // }
 
-    g.setCanvasSize()
+    // g.setCanvasSize()
     // g.canvas.height = Math.min(g.canvas.width * 2.5, window.innerHeight)
-    let scaleToFit = Math.min(g.canvas.width / window.innerWidth, g.canvas.height / window.innerHeight)
+    // let scaleToFit = Math.min(g.canvas.width / window.innerWidth, g.canvas.height / window.innerHeight)
     // // let scaleToFit = Math.min(window.innerWidth, window.innerHeight)
+    let scaleToFit = Math.min(
+      window.innerWidth / g.canvas.width, 
+      window.innerHeight / g.canvas.height
+    )
     g.canvas.style.transformOrigin = "0 0";
     g.canvas.style.transform = "scale(" + scaleToFit + ")";
     g.scale = scaleToFit
@@ -37,7 +45,8 @@ export let GA = {
       g.stage.children.forEach(c => displaySprite(c))
       function displaySprite(s) {
 
-        if (s.alwaysVisible || s.visible && s.gx < canvas.width + s.width && s.gx + s.width >= -s.width && s.gy < canvas.height + s.height && s.gy + s.height >= -s.height) {
+        // if (s.alwaysVisible || s.visible && s.gx < canvas.width + s.width && s.gx + s.width >= -s.width && s.gy < canvas.height + s.height && s.gy + s.height >= -s.height) {
+        if (s.alwaysVisible || s.visible) {
           ctx.save()
           if (g.interpolate) {
             if (s._previousX !== undefined) s.renderX = (s.x - s._previousX) * lagOffset + s._previousX
@@ -45,14 +54,14 @@ export let GA = {
             if (s._previousY !== undefined) s.renderY = (s.y - s._previousY) * lagOffset + s._previousY
             else s.renderY = s.y
           } else {
-            s.renderX = s.x
-            s.renderY = s.y
+          s.renderX = s.x
+          s.renderY = s.y
           }
           ctx.translate(s.renderX + (s.width * s.pivotX), s.renderY + (s.height * s.pivotY))
           ctx.globalAlpha = s.alpha
           ctx.rotate(s.rotation)
-          ctx.scale(s.scaleX, s.scaleY)
-          if (s.blendMode)  ctx.globalCompositeOperation = s.blendMode;
+          // ctx.scale(s.scaleX, s.scaleY)
+          // if (s.blendMode)  ctx.globalCompositeOperation = s.blendMode;
           if (s.render) s.render(ctx)
           if (s.children && s.children.length > 0) {
             ctx.translate(-s.width * s.pivotX, -s.height * s.pivotY)
@@ -419,10 +428,10 @@ export let GA = {
       o.yellowHB.visible = false
     }
 
-    g.makeText = (parent, content, font, fillStyle, x, y) => {
+    g.makeText = (parent, content, fontSize, fillStyle, x = 0, y = 0) => {
       const o = {
         content: content,
-        font: font || "32px sans-serif",
+        font: `small-caps ${fontSize}px sans-serif`,
         fs: fillStyle,
         textBaseline: "top",
         render(c) {
@@ -442,21 +451,30 @@ export let GA = {
 
     g.simpleButton = (
       text,
-      xPos = 10,
-      yPos = 10,
+      x = 0,
+      y = 0,
       textX = 10,
       textY = 10,
-      color = '#555',
-      size = 28,
       action = () => console.log(text),
-      width = 50,
-      height = 50
+      width = 70,
+      height = 40,
+      size = 14,
+      color = '#080'
       ) => {
-      const button = g.rectangle(width, height, color, 1, xPos, yPos)
-      if (action) button.action = action
-      const tSize = size
-      if (text ) button.text = g.makeText(button, text, `${tSize}px arial`, '#FFF', textX, textY)
-      // g.moreProperties(button)
+
+      const button = g.rectangle(width, height, color, 1, x, y)
+
+      if (action) {
+        buttons.push(button)
+        button.action = action
+      }
+
+      if (text) {
+        button.text = g.makeText(button, text, size, '#FFF', textX, textY)
+      }
+        
+      // uiElements.push(button)
+      uiLayer.addChild(button)
       return button
     }
     g.xDistance = (a, b) => Math.abs(b.centerX - a.centerX)

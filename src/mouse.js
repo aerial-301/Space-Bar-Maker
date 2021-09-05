@@ -21,12 +21,10 @@ const leftMouseDown = () => {
   for (const button of buttons) {
     // console.log(button)
     if (g.hitTestPoint(g.pointer, button)) {
-      button.f = '#FFF'
-      g.wait(60, () => {
-        button.f = '#800'
-      })
-      console.log('pointer = ', g.pointer.x.toFixed(2), g.pointer.y.toFixed(2))
-      console.log('button = ', button.gx, button.gy)
+      button.action()
+      
+      // console.log('pointer = ', g.pointer.x.toFixed(2), g.pointer.y.toFixed(2))
+      // console.log('button = ', button.gx, button.gy)
     }
   }
 
