@@ -5,10 +5,12 @@ import { canvas, initCanvasEvents } from './main/mainSetUp/initCanvas.js'
 import { initMap } from './main/mainSetUp/initMap.js'
 import { debugShape } from '../debug.js'
 
-export const mainCanvas = {
-  get width() { return canvas.width },
-  get height() { return canvas.height}
-}
+// export const mainCanvas = {
+//   get width() { return 380 },
+//   get height() { return 540}
+//   // get width() { return canvas.width },
+//   // get height() { return canvas.height}
+// }
 
 
 const objects = [
@@ -63,7 +65,8 @@ const movingElements = []
 let elementsCanMove = true
 
 
-const maxShift = 40
+const maxShift = 25
+const moveSteps = 5
 let shiftAmount = 0
 
 
@@ -124,23 +127,23 @@ export let uiElements = []
 g = GA.create(mainMenu)
 g.start()
 
-function setSize(element, p1, p2) {
-  element.width = mainCanvas.width * p1
-  element.height = mainCanvas.height * p2
-}
+// function setSize(element, p1, p2) {
+//   element.width = mainCanvas.width * p1
+//   element.height = mainCanvas.height * p2
+// }
 
-export function setPos(element, p1, p2, xOffset = 0, yOffset = 0) {
-  element.x = mainCanvas.width * p1 + xOffset
-  element.y = mainCanvas.height * p2 + yOffset
-}
+// export function setPos(element, p1, p2, xOffset = 0, yOffset = 0) {
+//   element.x = mainCanvas.width * p1 + xOffset
+//   element.y = mainCanvas.height * p2 + yOffset
+// }
 
-export function adjustElement(e, w, h, tx, ty) {
-  setSize(e, w, h)
-  if (e.text) {
-    e.text.x = e.width * tx
-    e.text.y = e.height * ty
-  }
-}
+// export function adjustElement(e, w, h, tx, ty) {
+//   setSize(e, w, h)
+//   if (e.text) {
+//     e.text.x = e.width * tx
+//     e.text.y = e.height * ty
+//   }
+// }
 
 function buttonPress(b) {
   b.f = '#FFF'
@@ -158,17 +161,17 @@ function removeElement(n) {
   }
 }
 
-function addElement(x = 40, y = buttons[0].y - 50) {
+function addElement(x = 10, y = buttons[0].y - 50) {
   const randomElement = nonSolids[g.randomNum(0, nonSolids.length)]
   const t = g.makeText(uiLayer, randomElement, 18, '#FFF', x, y)
-  t.adjust = () => {
+  // t.adjust = () => {
 
-    // t.y = uiElements[0]. y - 50
-    // if (DynamicSize) adjustElement(button, width, height, textX, textY)
-    // if (DynamicPos) setPos(button, xPer, yPer, xOff, -button.height)
-  }
+  //   // t.y = uiElements[0]. y - 50
+  //   // if (DynamicSize) adjustElement(button, width, height, textX, textY)
+  //   // if (DynamicPos) setPos(button, xPer, yPer, xOff, -button.height)
+  // }
   mainBelt.unshift(t)
-  uiElements.push(t)
+  // uiElements.push(t)
 }
 
 function moveElements(n = 0) {
@@ -187,7 +190,7 @@ function moveElements(n = 0) {
 
 function moveElementsNOW() {
     for (const item of movingElements) {
-      item.x += 2
+      item.x += moveSteps
     }
     if (shiftAmount < maxShift) {
       g.wait(1, () => moveElementsNOW())
@@ -212,7 +215,7 @@ function moveElementsNOW() {
         movingElements.length = 0
       }
     }
-    shiftAmount += 2
+    shiftAmount += moveSteps
   // }
 }
 
@@ -224,28 +227,30 @@ function mainMenu(){
   //   // else moveElements()
   //   // buttonPress(menu)
   // }, .15, .1)
+
+  const buttonsHeight = 540
   
-  const r1 = g.simpleButton('discard', .15, 1, 0, .21, .4, () => {
+  const r1 = g.simpleButton('discard', 4, buttonsHeight, 8, 10, () => {
     removeElement(3)
     moveElements(2)
     buttonPress(r1)
-  }, .2, .1)
+  })
 
-  const r2 = g.simpleButton('remove', .35, 1, 0, .15, .4, () => {
+  const r2 = g.simpleButton('remove', r1.x + r1.width + 4, buttonsHeight, 8, 10, () => {
     removeElement(2)
     moveElements(1)
     buttonPress(r2)
-  }, .2, .1)
+  })
 
-  const r3 = g.simpleButton('delete', .55, 1, 0, .15, .4, () => {
+  const r3 = g.simpleButton('delete', r2.x + r2.width + 4, buttonsHeight, 8, 10, () => {
     if (elementsCanMove && !pushed) {
       mainBelt.pop().visible = false
       moveElements(0)
     }
     buttonPress(r3)
-  }, .2, .1)
+  })
 
-  g.simpleButton('OK', .75, 1, 0, .25, .4, () => {
+  const ok = g.simpleButton('OK', r3.x + r3.width + 4, buttonsHeight, 8, 10, () => {
 
     if (elementsCanMove && !pushed) {
       pushed = true
@@ -262,38 +267,39 @@ function mainMenu(){
       moveElements()
     }
     
-  }, .24, .1)
+    buttonPress(ok)
+  })
 
   // const squareWidth = 100
   // const squareHeight = 100
   
-  uiElements.forEach(e => e.adjust())
+  // uiElements.forEach(e => e.adjust())
 
 
 
-  for (let i = 0; i < 10; i++) {
-    addElement(40 * (10 - i))
+  for (let i = 0; i < 4; i++) {
+    addElement(10 + (25 * (3 - i)))
   }
   
   setup()
 }
 
-// debug1 = g.makeText(g.stage, 'text 1', '', '#FFF')
-// debug2 = g.makeText(g.stage, 'text 2', '', '#FFF', 0, 50)
-// debug3 = g.makeText(g.stage, 'text 2', '', '#FFF', 0, 100)
+debug1 = g.makeText(g.stage, 'text 1', 20, '#FFF')
+debug2 = g.makeText(g.stage, 'text 2', 20, '#FFF', 0, 20)
+debug3 = g.makeText(g.stage, 'text 2', 20, '#FFF', 0, 40)
 
 function setup(){
-  initMap()
+  // initMap()
   g.state = play
 }
 
 function play(){
 
-  // debug1.content = `mainBelt = ${mainBelt.length}`
+  debug1.content = `${window.innerWidth}`
+  debug2.content = `${window.innerHeight}`
 
-  // debug2.content = `products = ${products.length}`
 
-  // debug3.content = `movings = ${movingElements.length}`
+  debug3.content = `canvas ${canvas.width} , ${canvas.height}`
 
   // if (mainBelt.length < 10) {
   //   addElement()

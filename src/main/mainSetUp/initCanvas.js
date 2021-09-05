@@ -1,4 +1,4 @@
-import { g, mainCanvas, menu, uiElements } from '../../main.js'
+import { g, menu, uiElements } from '../../main.js'
 import { pointerDown, pointerUp } from '../../mouse.js'
 export let canvas
 export const initCanvasEvents = () => {
@@ -10,13 +10,21 @@ export const initCanvasEvents = () => {
 }
 
 function resize () {
-  g.setCanvasSize()
-  updateLayout()
+  // g.setCanvasSize()
+  // updateLayout()
+  canvas.height = window.innerHeight
+  let scaleToFit = Math.min(
+    window.innerWidth / g.canvas.width, 
+    g.canvas.height / window.innerHeight
+  )
+  g.canvas.style.transformOrigin = "0 0";
+  g.canvas.style.transform = "scale(" + scaleToFit + ")";
+  g.scale = scaleToFit
 }
 
-function updateLayout () {
-  uiElements.forEach(e => e.adjust())
-}
+// function updateLayout () {
+//   uiElements.forEach(e => e.adjust())
+// }
 
-window.addEventListener('orientationchange', resize, false);
+// window.addEventListener('orientationchange', resize, false);
 window.onresize = resize

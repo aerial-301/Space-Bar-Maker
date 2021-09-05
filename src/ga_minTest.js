@@ -1,6 +1,6 @@
 // import { world } from './main/mainSetUp/initLayers.js'
 
-import { adjustElement, setPos, uiElements } from "./main.js"
+import { uiElements } from "./main.js"
 import { buttons } from "./main/mainSetUp/initBottomPanel.js"
 import { uiLayer } from "./main/mainSetUp/initLayers.js"
 
@@ -15,21 +15,25 @@ export let GA = {
     g.state = undefined
     g.setup = setup
     g.paused = false
-    g._fps = 30
+    g._fps = 60
     g._startTime = Date.now()
     g._frameDuration = 1000 / g._fps
     g._lag = 0
     g.interpolate = true
 
-    g.setCanvasSize = () => {
-      g.canvas.width = window.innerWidth
-      g.canvas.height = window.innerHeight - 15
-    }
+    // g.setCanvasSize = () => {
+    //   g.canvas.width = window.innerWidth
+    //   g.canvas.height = window.innerHeight - 15
+    // }
 
-    g.setCanvasSize()
+    // g.setCanvasSize()
     // g.canvas.height = Math.min(g.canvas.width * 2.5, window.innerHeight)
-    let scaleToFit = Math.min(g.canvas.width / window.innerWidth, g.canvas.height / window.innerHeight)
+    // let scaleToFit = Math.min(g.canvas.width / window.innerWidth, g.canvas.height / window.innerHeight)
     // // let scaleToFit = Math.min(window.innerWidth, window.innerHeight)
+    let scaleToFit = Math.min(
+      window.innerWidth / g.canvas.width, 
+      window.innerHeight / g.canvas.height
+    )
     g.canvas.style.transformOrigin = "0 0";
     g.canvas.style.transform = "scale(" + scaleToFit + ")";
     g.scale = scaleToFit
@@ -447,39 +451,29 @@ export let GA = {
 
     g.simpleButton = (
       text,
-      xPer = 0,
-      yPer = 0,
-      xOff,
-      textX = .4,
-      textY = .4,
+      x = 0,
+      y = 0,
+      textX = 10,
+      textY = 10,
       action = () => console.log(text),
-      width = .2,
-      height = .1,
-      DynamicPos = true,
-      DynamicSize = true,
-      size = 18,
+      width = 70,
+      height = 40,
+      size = 14,
       color = '#080'
       ) => {
 
-      const button = g.rectangle(width, height, color, 1, xPer, yPer)
+      const button = g.rectangle(width, height, color, 1, x, y)
 
       if (action) {
-
         buttons.push(button)
         button.action = action
       }
 
       if (text) {
-        const tSize = size
-        button.text = g.makeText(button, text, tSize, '#FFF')
+        button.text = g.makeText(button, text, size, '#FFF', textX, textY)
       }
         
-      button.adjust = () => {
-        if (DynamicSize) adjustElement(button, width, height, textX, textY)
-        if (DynamicPos) setPos(button, xPer, yPer, xOff, -button.height)
-      }
-
-      uiElements.push(button)
+      // uiElements.push(button)
       uiLayer.addChild(button)
       return button
     }
