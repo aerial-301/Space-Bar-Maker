@@ -111,7 +111,7 @@ export let GA = {
         g.render(g.canvas, 0)
       }
       else {
-        var current = Date.now(), elapsed = current - g._startTime
+        let current = Date.now(), elapsed = current - g._startTime
         if (elapsed > 1000) elapsed = g._frameDuration
         g._startTime = current
         g._lag += elapsed

@@ -1,63 +1,26 @@
 import { GA } from './ga_minTest.js'
 import { canvas, initCanvasEvents } from './initCanvas.js'
+import { initEquipments, smelter } from './initEquipments.js'
+import { elementsCanMove, moveElements, removeElement } from './operations.js'
+import { moveToSmelter, toBeSmelted } from './smelt.js'
 // import { debugShape } from '../debug.js'
 
 export let uiLayer, layer2, buttons = []
 
-const objects = [
-  '📌',
-  '📏',
-  '📼',
-  '🔧',
-  '📞',
-  '🛒',
-  '📢',
-  '🎤',
-  '🚲',
-  '🎧',
-  '🎮',
-  '📷',
-  '🏆',
-  '💎',
-]
-
-const nonSolids = [
-  '🍓',
-  '🍇',
-  '🍏',
-  '🍉',
-  '🍖',
-  '🍰',
-  '🍔',
-  '🐓',
-  '🐠',
-  '🐁',
-]
-
-const uiStuff = [
-  '💵',
-  '⭐'
-]
-
-const movingElements = []
-
-let elementsCanMove = true
-
-const beltSize = 17
-const maxShift = 25
-const moveSteps = 5
-let shiftAmount = 0
-
-
-const mainBelt = []
-
+export const mainBelt = []
 const products = []
-
-let pushed = false
-
 let stackSize = 0
 
-let inserted = 0
+export const stats = {
+  currentCash: 1000,
+  displayedCash: 1000,
+  repairCost: 0,
+  // operationCost: 0,
+  // sellValue: 0,
+
+
+}
+
 
 const surfaceWidth = 414
 const surfaceHeight = 812
@@ -92,25 +55,20 @@ let bloodDrops = []
 let fadeOuts = []
 let miners = []
 
-let toBeSmelted = []
-let smelting = false
 
-let debug1
+// let smelting = false
+
+export let cashText
+export let displayedCash = 1000
 let debug2
 let debug3
 
+export let valueText
+export let operationText
+export let totalText
+export let healthText
+export let repairText
 
-let smelter
-let randomElement
-let itemValue
-let index
-
-let smeltTime, currentSmeltTime
-
-
-let space
-
-let spaceValue, valueText
 
 export let uiElements = []
 
@@ -121,167 +79,6 @@ function buttonPress(b) {
   b.f = '#FFF'
     g.wait(60, () => b.f = '#800')
 }
-
-function removeElement(n) {
-  if (elementsCanMove && !pushed) {
-    const index = mainBelt.length - n
-    const item = mainBelt[index]
-    if (item) {
-      g.removeItem(mainBelt, item)
-      item.visible = false
-    }
-  }
-}
-
-
-
-function addElement(x = 10, y = buttons[0].y - 50) {
-  if (Math.random() > .5) {
-    index = g.randomNum(0, objects.length)
-    randomElement = objects[index]
-    index += 1
-  } else {
-    index = g.randomNum(0, nonSolids.length)
-    randomElement = nonSolids[index]
-    index = (index + 1) * -1
-  }
-  const t = g.makeText(uiLayer, randomElement, 18, 0, x, y)
-  t.value = index * 5
-  mainBelt.unshift(t)
-}
-
-function moveElements(n = 0) {
-  if (elementsCanMove) {
-    elementsCanMove = false
-    const index = mainBelt.length - n
-
-    for (let i = 0; i < index; i++) {
-      movingElements.push(mainBelt[i])
-    }
-
-    moveElementsNOW()
-  }
-  
-}
-
-function moveElementsNOW() {
-    for (const item of movingElements) {
-      item.x += moveSteps
-    }
-    shiftAmount += moveSteps
-    if (shiftAmount < maxShift) {
-      g.wait(1, () => moveElementsNOW())
-      
-    } else {
-      shiftAmount = 0
-      
-      addElement()
-      if (pushed) {
-        if (inserted < 2) {
-          inserted += 1
-          movingElements.push(mainBelt[0])
-          moveElementsNOW()
-        } else {
-          pushed = false
-          inserted = 0
-          elementsCanMove = true
-          movingElements.length = 0
-        }
-      } else {
-        elementsCanMove = true
-        movingElements.length = 0
-      }
-    }
-    
-  // }
-}
-
-const productsMaxMove = 75
-let productsMoveAmount = 0
-
-function moveToSmelter() {
-  if (productsMoveAmount < productsMaxMove) {
-    productsMoveAmount += 5
-    toBeSmelted.forEach(p => p.x -= 5)
-    g.wait(5, () => {
-      moveToSmelter()
-    })
-  } else {
-    productsMoveAmount = 0
-    startSmelting()
-  }
-}
-
-function startSmelting() {
-
-  smeltTime = g.randomNum(150, 400)
-  currentSmeltTime = 0
-  smelter.doneBar.visible = false
-  
-
-
-
-  smelt()
-
-  spaceValue = 0
-
-  toBeSmelted.forEach(p => {
-    spaceValue += p.value
-    g.remove(p)
-  })
-  toBeSmelted.length = 0
-  
-}
-
-function smelt() {
-  if (currentSmeltTime < smeltTime) {
-    currentSmeltTime += 1
-    smelter.bar.width = (currentSmeltTime / smeltTime) * 60
-    g.wait(5, () => smelt())
-  } else {
-    smelter.doneBar.visible = true
-    leftAmount = 0
-    upAmount = 0
-    space.visible = true
-    eject()
-  }
-}
-
-const leftSteps = 115
-const upSteps = 500
-let leftAmount, upAmount
-
-function eject() {
-  if (leftAmount < leftSteps) {
-    leftAmount += 5
-    space.x -= 5
-    g.wait(1, eject)
-  } else {
-    smelting = false
-    valueText.content = `value = ${spaceValue}`
-
-
-
-    g.wait(500, moveUp)
-    
-  }
-}
-
-
-function moveUp() {
-  if (upAmount < upSteps) {
-    upAmount += 7
-    space.y -= 7
-    g.wait(1, moveUp)
-  } else {
-    space.visible = false
-    space.x = 310
-    space.y = 115
-  }
-}
-
-
-
 
 function initButtons() {
   const buttonsHeight = 580
@@ -299,18 +96,18 @@ function initButtons() {
   })
 
   const r3 = g.simpleButton('r3', r2.x + r2.width + 4, buttonsHeight, 8, 10, () => {
-    if (elementsCanMove && !pushed) {
+    if (elementsCanMove && !smelter.pushed) {
       mainBelt.pop().visible = false
       moveElements(0)
     }
     buttonPress(r3)
   })
 
-  const push = g.simpleButton('Push', 0, buttonsHeight, 8, 10, () => {
+  const push = g.simpleButton('Push', 175, buttonsHeight, 8, 10, () => {
     if (stackSize < 10) {
-      if (elementsCanMove && !pushed) {
+      if (elementsCanMove && !smelter.pushed) {
+        smelter.pushed = true
         stackSize += 1
-        pushed = true
         const l = mainBelt.length
         for (let i = 1; i < 4; i++) {
           const item = mainBelt[l - i]
@@ -324,11 +121,10 @@ function initButtons() {
     buttonPress(push)
   })
   
-  const smelt = g.simpleButton('Smelt', 80 + push.width + 4, buttonsHeight, 8, 10, () => {    
+  const smelt = g.simpleButton('Smelt', 100, buttonsHeight, 8, 10, () => {    
     if (stackSize == 10) {
-      if (!smelting) {
-
-        smelting = true
+      if (smelter.ready) {
+        smelter.ready = false
         products.forEach(p => toBeSmelted.push(p))
 
         moveToSmelter()
@@ -338,80 +134,60 @@ function initButtons() {
 
     }
     
-    
     buttonPress(smelt)
   })
+
+
+  const repair = g.simpleButton('Repair', 0, buttonsHeight, 8, 10, () => {
+    if (smelter.health <= 0) {
+      smelter.fix()
+    }
+
+    buttonPress(repair)
+  })
+
+
+
+
+
+
 }
 
 
-function initEquipments() {
-
-
-
-  // smelter = g.rectangle(80, 410, '#333', 2, 305, 110)
-
-  const xPos = 25 * (beltSize - 5)
-
-  smelter = g.rectangle(80, 410, '#333', 2, xPos, 110)
-  layer2.addChild(smelter)
-
-  const smelterBarEmpty = g.rectangle(60, 20, '#000', 0, xPos + 10, 480)
-  layer2.addChild(smelterBarEmpty)
-
-  smelter.bar = g.rectangle(60, 20, '#ff0', 0, xPos + 10, 480)
-  layer2.addChild(smelter.bar)
-  
-
-  smelter.doneBar = g.rectangle(60, 20, '#0f0', 0, xPos + 10, 480)
-  layer2.addChild(smelter.doneBar)
-  // smelter.doneBar.visible = false
-
-  
-  space = g.rectangle(70, 400, '#777', 2, xPos + 5, 115)
-  // layer2.addChild(space)
-  space.visible = false
-  uiLayer.addChild(space)
-
-
-  const packaging = g.rectangle(100, 50, '#333', 1, 180, 0)
-  layer2.addChild(packaging)
-}
 
 
 function setup(){
 
-  debug1 = g.makeText(g.stage, 'text 1', 20, '#FFF')
-  debug2 = g.makeText(g.stage, 'text 2', 20, '#FFF', 0, 20)
-  debug3 = g.makeText(g.stage, 'text 3', 20, '#FFF', 0, 40)
-
+  // debug2 = g.makeText(g.stage, 'text 2', 20, '#FFF', 0, 20)
+  // debug3 = g.makeText(g.stage, 'text 3', 20, '#FFF', 0, 40)
+  
   initCanvasEvents()
   uiLayer = g.group()
   layer2 = g.group()
 
+  const cashIcon = g.makeText(layer2, '💰', 20, 0, 10, 10)
+  cashText = g.makeText(layer2, `${displayedCash}`, 20, '#FFF', 34, 11)
+  
   initButtons()
 
   initEquipments()
 
 
-  valueText = g.makeText(layer2, 'value = $0', 14, '#ddd', 4, 200)
-
-
-  // const valueDisplay = g.rectangle(160, 400, '#222', 8, 10, 100)
-  // layer2.addChild(valueDisplay)
-
-
+  valueText = g.makeText(layer2, 'Value = 0', 14, '#ddd', 4, 200)
+  operationText = g.makeText(layer2, 'Operation cost = 0', 14, '#ddd', 4, 215)
+  totalText = g.makeText(layer2, 'Total = 0', 14, '#ddd', 4, 250)
+  repairText = g.makeText(layer2, 'Repair Cost = 0', 14, '#ddd', 4, 490)
   
-  for (let i = 0; i <= beltSize; i++) {
-    addElement(10 + (25 * (beltSize - i)))
-  }
+  healthText = g.makeText(layer2, `Health: ${smelter.health}`, 13, '#FFF', 304, 390)
+  
 
 }
 
 function play(){
-  debug1.content = `stack = ${stackSize}`
+  cashText.content = `stack = ${stackSize}`
   debug2.content = `products = ${products.length}`
   debug3.content = `canvas ${canvas.width} , ${canvas.height}`
-  // debug1.content = `${window.innerWidth}`
+  // cashText.content = `${window.innerWidth}`
   // debug2.content = `${window.innerHeight}`
   // debug3.content = `canvas ${canvas.width} , ${canvas.height}`
 
