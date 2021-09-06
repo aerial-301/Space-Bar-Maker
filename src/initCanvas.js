@@ -12,10 +12,10 @@ export const initCanvasEvents = () => {
 window.onresize = resize
 
 function resize () {
-  canvas.height = window.innerHeight
+  // canvas.height = window.innerHeight
   let scaleToFit = Math.min(
     window.innerWidth / g.canvas.width, 
-    g.canvas.height / window.innerHeight
+    window.innerHeight / g.canvas.height
   )
   g.canvas.style.transformOrigin = "0 0";
   g.canvas.style.transform = "scale(" + scaleToFit + ")";

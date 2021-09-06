@@ -3,7 +3,7 @@ import { initCanvasEvents } from './initCanvas.js'
 import { initEquipments, smelter, space } from './initEquipments.js'
 import { elementsMoving, moveElements, removeElement } from './operations.js'
 import { moveToSmelter, toBeSmelted } from './smelt.js'
-// import { debugShape } from '../debug.js'
+
 
 export let uiLayer, layer2, buttons = []
 
@@ -15,28 +15,11 @@ export const stats = {
   currentCash: 1000,
   displayedCash: 1000,
   repairCost: 0,
-
-  // operationCost: 0,
-  // sellValue: 0,
 }
 
 export const main = {
   action: true,
   process: false,
-}
-
-// let actions
-
-// let fpsDisplay
-
-// const surfaceWidth = 414
-// const surfaceHeight = 812
-// const cellSize = 73
-// const PI = Math.PI
-
-const currentAction = {
-  placingBuilding: false,
-  started: false
 }
 
 const K = {
@@ -49,22 +32,6 @@ const K = {
 
 let g
 export let menu
-// let solids = []
-// let units = []
-// let playerUnits = []
-// let selectedUnits = []
-// let movingUnits = []
-// let armedUnits = []
-// let enemies = []
-// let attackingTarget = []
-// let shots = []
-// let bloodDrops = []
-// let fadeOuts = []
-// let miners = []
-
-
-// let smelting = false
-
 export let cashText
 export let displayedCash = 1000
 let debug2
@@ -152,7 +119,7 @@ function initButtons() {
 
 
   const repair = g.simpleButton('Repair', 0, buttonsHeight, 8, 10, () => {
-    if (smelter.health <= 0) {
+    if (!smelter.ready) {
       smelter.fix()
     }
 
@@ -191,7 +158,7 @@ function setup(){
   totalText = g.makeText(layer2, 'Total = 0', 14, '#ddd', 4, 250)
   repairText = g.makeText(layer2, 'Repair Cost = 0', 14, '#ddd', 4, 490)
   
-  healthText = g.makeText(layer2, `Health: ${smelter.health}`, 13, '#FFF', 304, 390)
+  healthText = g.makeText(layer2, `Health: ${smelter.health}`, 13, '#FFF', 304, 460)
 
 
   // fpsDisplay = g.makeText(layer2, 'FPS', 24, '#fff', 0, 100)
@@ -218,5 +185,4 @@ function play(){
 
 export { 
   g,
-  currentAction,
 }

@@ -109,10 +109,11 @@ function moveElementsNOW() {
           movingElements.push(mainBelt[0])
           moveElementsNOW()
         } else {
-          smelter.pushed = false
           inserted = 0
           elementsMoving = false
           movingElements.length = 0
+          g.wait(7, () => smelter.pushed = false)
+          
         }
       } else {
         elementsMoving = false
