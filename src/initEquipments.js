@@ -14,6 +14,7 @@ export function initEquipments() {
 
   smelter = g.rectangle(80, 410, '#333', 2, xPos, 110)
   smelter.ready = true
+  smelter.running = false
   smelter.pushed = false
   smelter.baseHealth = 250
   smelter.health = smelter.baseHealth
@@ -37,6 +38,9 @@ export function initEquipments() {
 
   smelter.break = () => {
     smelter.breakBar.visible = true
+    smelter.ready = false
+    smelter.running = false
+    // smelter.running = false
     // smelter.isWorking = false
   }
   
@@ -51,13 +55,16 @@ export function initEquipments() {
     smelter.breakBar.visible = false
     smelter.readyBar.visible = true
     smelter.ready = true
+    smelter.running = false
   }
 
   
   space = g.rectangle(70, 400, '#777', 2, xPos + 5, 115)
-  // layer2.addChild(space)
+  space.xOrigin = space.x
+  space.yOrigin = space.y
   space.visible = false
   uiLayer.addChild(space)
+  // layer2.addChild(space)
 
 
   const packaging = g.rectangle(100, 50, '#333', 1, 180, 0)

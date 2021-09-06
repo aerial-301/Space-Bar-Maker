@@ -73,7 +73,7 @@ function smelt() {
     } else {
       g.wait(1000, () => {
         smelter.readyBar.visible = true
-        smelter.ready = true
+        smelter.running = false
       })
     }
 
@@ -83,17 +83,18 @@ function smelt() {
   }
 }
 
-const leftSteps = 115
+const leftSteps = 110
 const upSteps = 500
 let leftAmount, upAmount
 
 function eject() {
   if (leftAmount < leftSteps) {
+    
     leftAmount += 5
     space.x -= 5
     g.wait(1, eject)
   } else {
-    
+    console.log(leftAmount, space.x)
 
     // stats.currentCash += stats.displayedCash + spaceValue
     stats.currentCash += total
@@ -112,8 +113,10 @@ function moveUp() {
     g.wait(1, moveUp)
   } else {
     space.visible = false
-    space.x = 310
-    space.y = 115
+    space.x = space.xOrigin
+    space.y = space.yOrigin
+    // space.x = 305
+    // space.y = 115
   }
 }
 
@@ -122,7 +125,7 @@ export function changeValue() {
     if (stats.displayedCash < stats.currentCash) stats.displayedCash += 5
     else stats.displayedCash -= 5
     cashText.content = `${stats.displayedCash}`
-    g.wait(2, changeValue)
+    g.wait(1, changeValue)
   }
 }
 

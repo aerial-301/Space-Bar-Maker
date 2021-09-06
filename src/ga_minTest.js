@@ -1,4 +1,4 @@
-import { buttons, uiLayer } from "./main.js"
+import { buttons, main, stats, uiLayer } from "./main.js"
 // import { buttons } from "./main/mainSetUp/initBottomPanel.js"
 
 export let GA = {
@@ -45,15 +45,16 @@ export let GA = {
         // if (s.alwaysVisible || s.visible && s.gx < canvas.width + s.width && s.gx + s.width >= -s.width && s.gy < canvas.height + s.height && s.gy + s.height >= -s.height) {
         if (s.alwaysVisible || s.visible) {
           ctx.save()
-          if (g.interpolate) {
+          // if (g.interpolate) {
             if (s._previousX !== undefined) s.renderX = (s.x - s._previousX) * lagOffset + s._previousX
             else s.renderX = s.x
             if (s._previousY !== undefined) s.renderY = (s.y - s._previousY) * lagOffset + s._previousY
             else s.renderY = s.y
-          } else {
-          s.renderX = s.x
-          s.renderY = s.y
-          }
+          // } 
+          // else {
+          // s.renderX = s.x
+          // s.renderY = s.y
+          // }
           ctx.translate(s.renderX + (s.width * s.pivotX), s.renderY + (s.height * s.pivotY))
           ctx.globalAlpha = s.alpha
           // ctx.rotate(s.rotation)
@@ -106,22 +107,32 @@ export let GA = {
 
     function gameLoop(){
       requestAnimationFrame(gameLoop, g.canvas)
-      if (g._fps === undefined) {
-        update()
+
+      update()
+      if (main.process || main.action || (stats.currentCash != stats.displayedCash)) {
+        // console.log(main.process, main.action)
         g.render(g.canvas, 0)
+        // g.render(g.canvas, 0)
       }
-      else {
-        let current = Date.now(), elapsed = current - g._startTime
-        if (elapsed > 1000) elapsed = g._frameDuration
-        g._startTime = current
-        g._lag += elapsed
-        while (g._lag >= g._frameDuration) {
-          capturePreviousSpritePositions()
-          update()
-          g._lag -= g._frameDuration
-        }
-        g.render(g.canvas, g._lag / g._frameDuration)
-      }
+      // if (!g._fps) {
+        // g.render(g.canvas, 0)
+      // }
+      // else {
+        // let current = Date.now(), elapsed = current - g._startTime
+        // if (elapsed > 1000) elapsed = g._frameDuration
+        // g._startTime = current
+        // g._lag += elapsed
+        // while (g._lag >= g._frameDuration) {
+        //   capturePreviousSpritePositions()
+        //   update()
+        //   g._lag -= g._frameDuration
+        // }
+
+        // if (stats.action || stats.process) {
+        //   g.render(g.canvas, g._lag / g._frameDuration)
+        //   // g.render(g.canvas, 0)
+        // }
+      // }
     }
     function capturePreviousSpritePositions(){
       g.stage.children.forEach(s => setPosition(s))
@@ -294,7 +305,7 @@ export let GA = {
       return true
     }
 
-    g.GlobalDistance = (a, b, aOffX = 0, aOffY = 0) => {return Math.sqrt( ( b.centerX - a.centerX + aOffX)**2 + ( b.centerY - a.centerY + aOffY)**2 )}
+    // g.GlobalDistance = (a, b, aOffX = 0, aOffY = 0) => {return Math.sqrt( ( b.centerX - a.centerX + aOffX)**2 + ( b.centerY - a.centerY + aOffY)**2 )}
     
     g.actx = new AudioContext()
     g.soundEffect = function(frequencyValue, decay, type, volumeValue, pitchBendAmount, reverse, randomValue) {
@@ -408,22 +419,22 @@ export let GA = {
       return o
     }
 
-    function moreProperties(o){
-      o.target = null
-      o.attacked = false,
-      o.isDamaged = false
-      o.isDead = false
-      o.damagedAmount = 0
-      o.HBscale = 0.5
-      o.yellowHB = g.rectangle((o.health / o.baseHealth) * 100 * o.HBscale, 5, 'Yellow')
-      o.addChild(o.yellowHB)
-      o.yellowHB.y = -10
-      o.HB = g.rectangle((o.health / o.baseHealth) * 100 * o.HBscale, 5, 'green')
-      o.addChild(o.HB)
-      o.HB.y = -10
-      o.HB.visible = false
-      o.yellowHB.visible = false
-    }
+    // function moreProperties(o){
+    //   o.target = null
+    //   o.attacked = false,
+    //   o.isDamaged = false
+    //   o.isDead = false
+    //   o.damagedAmount = 0
+    //   o.HBscale = 0.5
+    //   o.yellowHB = g.rectangle((o.health / o.baseHealth) * 100 * o.HBscale, 5, 'Yellow')
+    //   o.addChild(o.yellowHB)
+    //   o.yellowHB.y = -10
+    //   o.HB = g.rectangle((o.health / o.baseHealth) * 100 * o.HBscale, 5, 'green')
+    //   o.addChild(o.HB)
+    //   o.HB.y = -10
+    //   o.HB.visible = false
+    //   o.yellowHB.visible = false
+    // }
 
     g.makeText = (parent, content, fontSize, fillStyle, x = 0, y = 0) => {
       const o = {
@@ -474,9 +485,9 @@ export let GA = {
       uiLayer.addChild(button)
       return button
     }
-    g.xDistance = (a, b) => Math.abs(b.centerX - a.centerX)
-    g.yDistance = (a, b) => Math.abs(b.centerY - a.centerY)
-    g.addVectors = (a, b) => {return [a[0] + b[0], a[1] + b[1]]}
+    // g.xDistance = (a, b) => Math.abs(b.centerX - a.centerX)
+    // g.yDistance = (a, b) => Math.abs(b.centerY - a.centerY)
+    // g.addVectors = (a, b) => {return [a[0] + b[0], a[1] + b[1]]}
     g.removeItem = (array, item) => {
       const index = array.indexOf(item)
       if (index !== -1) array.splice(index, 1)

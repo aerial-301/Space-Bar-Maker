@@ -1,7 +1,7 @@
 import { GA } from './ga_minTest.js'
-import { canvas, initCanvasEvents } from './initCanvas.js'
-import { initEquipments, smelter } from './initEquipments.js'
-import { elementsCanMove, moveElements, removeElement } from './operations.js'
+import { initCanvasEvents } from './initCanvas.js'
+import { initEquipments, smelter, space } from './initEquipments.js'
+import { elementsMoving, moveElements, removeElement } from './operations.js'
 import { moveToSmelter, toBeSmelted } from './smelt.js'
 // import { debugShape } from '../debug.js'
 
@@ -15,16 +15,23 @@ export const stats = {
   currentCash: 1000,
   displayedCash: 1000,
   repairCost: 0,
+
   // operationCost: 0,
   // sellValue: 0,
-
-
 }
 
+export const main = {
+  action: true,
+  process: false,
+}
 
-const surfaceWidth = 414
-const surfaceHeight = 812
-const cellSize = 73
+// let actions
+
+// let fpsDisplay
+
+// const surfaceWidth = 414
+// const surfaceHeight = 812
+// const cellSize = 73
 // const PI = Math.PI
 
 const currentAction = {
@@ -42,18 +49,18 @@ const K = {
 
 let g
 export let menu
-let solids = []
-let units = []
-let playerUnits = []
-let selectedUnits = []
-let movingUnits = []
-let armedUnits = []
-let enemies = []
-let attackingTarget = []
-let shots = []
-let bloodDrops = []
-let fadeOuts = []
-let miners = []
+// let solids = []
+// let units = []
+// let playerUnits = []
+// let selectedUnits = []
+// let movingUnits = []
+// let armedUnits = []
+// let enemies = []
+// let attackingTarget = []
+// let shots = []
+// let bloodDrops = []
+// let fadeOuts = []
+// let miners = []
 
 
 // let smelting = false
@@ -76,8 +83,14 @@ g = GA.create(setup)
 g.start()
 
 function buttonPress(b) {
+
   b.f = '#FFF'
-    g.wait(60, () => b.f = '#800')
+  
+  g.wait(60, () => {
+    b.f = '#080'
+    g.wait(10, () => main.action = false)
+    
+  })
 }
 
 function initButtons() {
@@ -96,7 +109,7 @@ function initButtons() {
   })
 
   const r3 = g.simpleButton('r3', r2.x + r2.width + 4, buttonsHeight, 8, 10, () => {
-    if (elementsCanMove && !smelter.pushed) {
+    if (!elementsMoving && !smelter.pushed) {
       mainBelt.pop().visible = false
       moveElements(0)
     }
@@ -105,7 +118,7 @@ function initButtons() {
 
   const push = g.simpleButton('Push', 175, buttonsHeight, 8, 10, () => {
     if (stackSize < 10) {
-      if (elementsCanMove && !smelter.pushed) {
+      if (!elementsMoving && !smelter.pushed) {
         smelter.pushed = true
         stackSize += 1
         const l = mainBelt.length
@@ -123,8 +136,8 @@ function initButtons() {
   
   const smelt = g.simpleButton('Smelt', 100, buttonsHeight, 8, 10, () => {    
     if (stackSize == 10) {
-      if (smelter.ready) {
-        smelter.ready = false
+      if (smelter.ready && !smelter.running) {
+        smelter.running = true
         products.forEach(p => toBeSmelted.push(p))
 
         moveToSmelter()
@@ -179,39 +192,31 @@ function setup(){
   repairText = g.makeText(layer2, 'Repair Cost = 0', 14, '#ddd', 4, 490)
   
   healthText = g.makeText(layer2, `Health: ${smelter.health}`, 13, '#FFF', 304, 390)
-  
 
+
+  // fpsDisplay = g.makeText(layer2, 'FPS', 24, '#fff', 0, 100)
+
+  // actions = [
+  //   elementsMoving,
+  //   smelter.pushed,
+  //   space.visible,
+  // ]
+
+  g.state = play
+  g.wait(90, () => stats.action = false)
 }
 
 function play(){
-  cashText.content = `stack = ${stackSize}`
-  debug2.content = `products = ${products.length}`
-  debug3.content = `canvas ${canvas.width} , ${canvas.height}`
-  // cashText.content = `${window.innerWidth}`
-  // debug2.content = `${window.innerHeight}`
-  // debug3.content = `canvas ${canvas.width} , ${canvas.height}`
-
+  
+  if ([elementsMoving, smelter.running, smelter.pushed, space.visible].every(v => v == false)) {
+    main.process = false 
+  } else {
+    main.process = true
+  }
 
 }
 
 export { 
   g,
-  K,
-  // PI,
   currentAction,
-  surfaceHeight,
-  surfaceWidth,
-  units,
-  playerUnits,
-  selectedUnits,
-  movingUnits,
-  miners,
-  enemies,
-  shots,
-  solids,
-  attackingTarget,
-  armedUnits,
-  bloodDrops,
-  fadeOuts,
-  cellSize
 }

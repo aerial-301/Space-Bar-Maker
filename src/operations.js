@@ -44,11 +44,11 @@ let shiftAmount = 0
 let inserted = 0
 let randomElement
 let index, damage
-export let elementsCanMove = true
+export let elementsMoving = false
 // export let smelter.pushed = false
 
 export function removeElement(n) {
-  if (elementsCanMove && !smelter.pushed) {
+  if (!elementsMoving && !smelter.pushed) {
     const index = mainBelt.length - n
     const item = mainBelt[index]
     if (item) {
@@ -78,8 +78,8 @@ export function addElement(x = 10, y = buttons[0].y - 50) {
 }
 
 export function moveElements(n = 0) {
-  if (elementsCanMove) {
-    elementsCanMove = false
+  if (!elementsMoving) {
+    elementsMoving = true
     const index = mainBelt.length - n
 
     for (let i = 0; i < index; i++) {
@@ -111,11 +111,11 @@ function moveElementsNOW() {
         } else {
           smelter.pushed = false
           inserted = 0
-          elementsCanMove = true
+          elementsMoving = false
           movingElements.length = 0
         }
       } else {
-        elementsCanMove = true
+        elementsMoving = false
         movingElements.length = 0
       }
     }
