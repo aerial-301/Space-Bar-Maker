@@ -16,7 +16,7 @@ export function initEquipments() {
   smelter.ready = true
   smelter.running = false
   smelter.pushed = false
-  smelter.baseHealth = 250
+  smelter.baseHealth = 300
   smelter.health = smelter.baseHealth
 
   layer2.addChild(smelter)
@@ -36,6 +36,14 @@ export function initEquipments() {
   smelter.breakBar.visible = false
 
 
+  const HB = g.rectangle(8, 300, '#0f0', 2, 310, 120)
+  layer2.addChild(HB)
+  
+  smelter.healthBar = g.rectangle(8, 0, '#000', 0, 310, 120)
+  layer2.addChild(smelter.healthBar)
+  // smelter.healthBar.visible = false
+  
+
   smelter.break = () => {
     smelter.breakBar.visible = true
     smelter.ready = false
@@ -52,6 +60,7 @@ export function initEquipments() {
 
     smelter.health = smelter.baseHealth
     healthText.content = `Health: ${smelter.health}`
+    smelter.healthBar.height = 0
     smelter.breakBar.visible = false
     smelter.readyBar.visible = true
     smelter.ready = true

@@ -7,7 +7,7 @@ let productsMoveAmount = 0
 let smeltTime, currentSmeltTime, spaceValue
 
 let operationCost
-
+let healthDifference
 let total
 
 export function moveToSmelter() {
@@ -41,7 +41,12 @@ function startSmelting() {
     g.remove(p)
   })
 
-  stats.repairCost += (smelter.baseHealth - smelter.health) * 10
+
+  healthDifference = smelter.baseHealth - smelter.health
+
+  stats.repairCost += healthDifference * 10
+
+
 
   toBeSmelted.length = 0
   
@@ -68,9 +73,13 @@ function smelt() {
     
     
     healthText.content = `Health: ${smelter.health}`
+    // const healthGap = smelter.baseHealth - smelter.health
+    
     if (smelter.health <= 0) {
+      smelter.healthBar.height = smelter.baseHealth
       smelter.break()
     } else {
+      smelter.healthBar.height = healthDifference
       g.wait(1000, () => {
         smelter.readyBar.visible = true
         smelter.running = false
@@ -94,7 +103,7 @@ function eject() {
     space.x -= 5
     g.wait(1, eject)
   } else {
-    console.log(leftAmount, space.x)
+    // console.log(leftAmount, space.x)
 
     // stats.currentCash += stats.displayedCash + spaceValue
     stats.currentCash += total
