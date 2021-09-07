@@ -5,7 +5,7 @@ import { elementsMoving, moveElements, removeElement } from './operations.js'
 import { moveToSmelter, toBeSmelted } from './smelt.js'
 
 
-export let uiLayer, layer2, buttons = []
+export let uiLayer, mainLayer, buttons = [], uiLayerText, uiLayerBG
 
 export const mainBelt = []
 const products = []
@@ -37,11 +37,29 @@ export let displayedCash = 1000
 let debug2
 let debug3
 
+export let board
 export let valueText
+export let materialsText
 export let operationText
+
+
 export let totalText
-export let healthText
+
+
+export let valueNum
+export let operationNum
+export let totalNum
+export let repairNum
+
+
+
+
 export let repairText
+
+export let healthText
+
+
+export let repairButton
 
 
 export let uiElements = []
@@ -118,14 +136,15 @@ function initButtons() {
   })
 
 
-  const repair = g.simpleButton('Repair', 0, buttonsHeight, 8, 10, () => {
+  repairButton = g.simpleButton('🔧', 10, buttonsHeight - 150, 25, 15, () => {
     if (!smelter.ready) {
       smelter.fix()
     }
 
-    buttonPress(repair)
-  })
+    buttonPress(repairButton)
+  }, 20, 80, 50)
 
+  repairButton.visible = false
 
 
 
@@ -143,25 +162,73 @@ function setup(){
   
   initCanvasEvents()
   uiLayer = g.group()
-  layer2 = g.group()
+  uiLayerBG = g.group()
+  uiLayerText = g.group(uiLayer)
+  mainLayer = g.group(uiLayerBG, uiLayer, uiLayerText)
 
-  const cashIcon = g.makeText(layer2, '💰', 20, 0, 10, 10)
-  cashText = g.makeText(layer2, `${displayedCash}`, 20, '#FFF', 34, 11)
+  const cashIcon = g.makeText(mainLayer, '💰', 20, 0, 10, 10)
+  cashText = g.makeText(mainLayer, `${displayedCash}`, 20, '#FFF', 34, 11)
+
+
+  
   
   initButtons()
 
   initEquipments()
 
-
-  valueText = g.makeText(layer2, 'Value = 0', 14, '#ddd', 4, 200)
-  operationText = g.makeText(layer2, 'Operation cost = 0', 14, '#ddd', 4, 215)
-  totalText = g.makeText(layer2, 'Total = 0', 14, '#ddd', 4, 250)
-  repairText = g.makeText(layer2, 'Repair Cost = 0', 14, '#ddd', 4, 490)
   
-  healthText = g.makeText(layer2, `Health: ${smelter.health}`, 13, '#FFF', 304, 460)
+  
+  const frame = g.rectangle(170, 120, '#222', 1, 2, 190)
+  uiLayerBG.addChild(frame)
+  const bottomLine = g.rectangle(150, 2, '#fff', 0, 8, 270)
+  uiLayerText.addChild(bottomLine)
+  // result.alpha = 0.5
+  
+  valueText = g.makeText(uiLayerText, 'Value', 13, '#ddd', 8, 198)
+  
+  materialsText = g.makeText(uiLayerText, 'Materials = 0', 13, '#ddd', 8, valueText.y + 15)
+  
+  operationText = g.makeText(uiLayerText, 'Operation', 13, '#ddd', 8, materialsText.y + 15)
+  
+  totalText = g.makeText(uiLayerText, 'Total', 13, '#ddd', 8, 282)
 
 
-  // fpsDisplay = g.makeText(layer2, 'FPS', 24, '#fff', 0, 100)
+  valueNum = g.makeText(uiLayerText, '0', 14, '#0d0', 90, 198)
+  operationNum = g.makeText(uiLayerText, '0', 14, '#d00', 90, materialsText.y + 15)
+  totalNum = g.makeText(uiLayerText, '0', 14, '#ddd', 90, 282)
+  
+
+  
+  board = g.group(
+    frame,
+    bottomLine,
+    valueText,
+    valueNum,
+    operationText,
+    operationNum,
+    totalText,
+    totalNum
+  )
+
+  // board.visible = false
+
+
+
+  const repairFrame = g.rectangle(170, 100, '#222', 1, 2, 420)
+  uiLayerBG.addChild(repairFrame)
+
+  repairText = g.makeText(uiLayerText, 'Repair Cost', 14, '#ddd', 8, 490)
+  repairNum = g.makeText(uiLayerText, '0', 14, '#d00', 110, 490)
+  
+  
+
+
+
+
+  // healthText = g.makeText(mainLayer, `Health: ${smelter.health}`, 13, '#FFF', 304, 460)
+
+
+  // fpsDisplay = g.makeText(mainLayer, 'FPS', 24, '#fff', 0, 100)
 
   // actions = [
   //   elementsMoving,

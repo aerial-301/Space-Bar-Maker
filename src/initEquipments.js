@@ -1,4 +1,4 @@
-import { g, healthText, layer2, repairText, stats, uiLayer } from "./main.js"
+import { g, healthText, mainLayer, repairButton, repairNum, repairText, stats, uiLayer } from "./main.js"
 import { addElement } from "./operations.js"
 import { changeValue } from "./smelt.js"
 
@@ -19,28 +19,28 @@ export function initEquipments() {
   smelter.baseHealth = 300
   smelter.health = smelter.baseHealth
 
-  layer2.addChild(smelter)
+  mainLayer.addChild(smelter)
 
   const smelterBarEmpty = g.rectangle(60, 20, '#000', 0, xPos + 10, 480)
-  layer2.addChild(smelterBarEmpty)
+  mainLayer.addChild(smelterBarEmpty)
 
   smelter.bar = g.rectangle(60, 20, '#ff0', 0, xPos + 10, 480)
-  layer2.addChild(smelter.bar)
+  mainLayer.addChild(smelter.bar)
   
 
   smelter.readyBar = g.rectangle(60, 20, '#0f0', 0, xPos + 10, 480)
-  layer2.addChild(smelter.readyBar)
+  mainLayer.addChild(smelter.readyBar)
   
   smelter.breakBar = g.rectangle(60, 20, '#f00', 0, xPos + 10, 480)
-  layer2.addChild(smelter.breakBar)
+  mainLayer.addChild(smelter.breakBar)
   smelter.breakBar.visible = false
 
 
   const HB = g.rectangle(8, 300, '#0f0', 2, 310, 120)
-  layer2.addChild(HB)
+  mainLayer.addChild(HB)
   
   smelter.healthBar = g.rectangle(8, 0, '#000', 0, 310, 120)
-  layer2.addChild(smelter.healthBar)
+  mainLayer.addChild(smelter.healthBar)
   // smelter.healthBar.visible = false
   
 
@@ -56,15 +56,17 @@ export function initEquipments() {
     stats.currentCash -= stats.repairCost
     changeValue()
     stats.repairCost = 0
-    repairText.content = `Repair Cost = ${stats.repairCost}`
+    // repairText.content = `Repair Cost = ${stats.repairCost}`
+    repairNum.content = 0
 
     smelter.health = smelter.baseHealth
-    healthText.content = `Health: ${smelter.health}`
+    // healthText.content = `Health: ${smelter.health}`
     smelter.healthBar.height = 0
     smelter.breakBar.visible = false
     smelter.readyBar.visible = true
     smelter.ready = true
     smelter.running = false
+    repairButton.visible = false
   }
 
   
@@ -73,11 +75,11 @@ export function initEquipments() {
   space.yOrigin = space.y
   space.visible = false
   uiLayer.addChild(space)
-  // layer2.addChild(space)
+  // mainLayer.addChild(space)
 
 
   const packaging = g.rectangle(100, 50, '#333', 1, 180, 0)
-  layer2.addChild(packaging)
+  mainLayer.addChild(packaging)
 
 
 

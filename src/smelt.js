@@ -1,5 +1,5 @@
 import { smelter, space } from "./initEquipments.js"
-import { cashText, stats, g, valueText, healthText, operationText, totalText, repairText } from "./main.js"
+import { cashText, stats, g, valueText, healthText, operationText, totalText, repairText, materialsText, repairButton, valueNum, operationNum, totalNum, repairNum } from "./main.js"
 
 export let toBeSmelted = []
 const productsMaxMove = 75
@@ -7,8 +7,11 @@ let productsMoveAmount = 0
 let smeltTime, currentSmeltTime, spaceValue
 
 let operationCost
+let materials
 let healthDifference
 let total
+
+let materialsSet = []
 
 export function moveToSmelter() {
   if (productsMoveAmount < productsMaxMove) {
@@ -19,6 +22,9 @@ export function moveToSmelter() {
     })
   } else {
     productsMoveAmount = 0
+    valueNum.content = 0
+    operationNum.content = 0
+    totalNum.content = 0
     startSmelting()
   }
 }
@@ -32,19 +38,32 @@ function startSmelting() {
   smelt()
 
   spaceValue = 0
+  materialsSet.length = 0
 
-  operationCost = 10 * [...new Set(toBeSmelted)].length
+  toBeSmelted.forEach(e => {
+    if (materialsSet.findIndex(u => u.content == e.content) == -1) {
+      materialsSet.push(e)
+    }
+  })
+  
+  materials = materialsSet.length
 
+  
+
+  operationCost = (materials * 10) + 2 ** (materials / 3) | 0
+  // operationCost = Math.exp() materials * 10
+
+  
   toBeSmelted.forEach(p => {
     spaceValue += p.value
     smelter.health -= p.damage
+    stats.repairCost += p.damage * 10
     g.remove(p)
   })
 
-
   healthDifference = smelter.baseHealth - smelter.health
 
-  stats.repairCost += healthDifference * 10
+  // stats.repairCost += healthDifference * 10
 
 
 
@@ -64,19 +83,22 @@ function smelt() {
 
     total = spaceValue - operationCost
 
-    valueText.content = `Value = ${spaceValue}`
-    operationText.content = `Operation Cost = ${operationCost}`
-    totalText.content = `Total = ${total}`
+    valueNum.content = spaceValue
+    // materialsText.content = `Materials = ${materials}`
+    operationNum.content = operationCost
 
-    repairText.content = `Repair Cost = ${stats.repairCost}`
+    totalNum.content = total
+
+    repairNum.content = stats.repairCost
 
     
     
-    healthText.content = `Health: ${smelter.health}`
+    // healthText.content = `Health: ${smelter.health}`
     // const healthGap = smelter.baseHealth - smelter.health
     
     if (smelter.health <= 0) {
       smelter.healthBar.height = smelter.baseHealth
+      repairButton.visible = true
       smelter.break()
     } else {
       smelter.healthBar.height = healthDifference
@@ -129,12 +151,24 @@ function moveUp() {
   }
 }
 
+
+let diff 
 export function changeValue() {
-  if (stats.displayedCash != stats.currentCash) {
-    if (stats.displayedCash < stats.currentCash) stats.displayedCash += 5
-    else stats.displayedCash -= 5
-    cashText.content = `${stats.displayedCash}`
-    g.wait(1, changeValue)
+  diff = stats.displayedCash - stats.currentCash
+  // if (stats.displayedCash != stats.currentCash) {
+  // if (diff) {
+  if (diff < 0) {
+  // if (stats.displayedCash < stats.currentCash) {
+    if (Math.abs(diff) > 8) stats.displayedCash += 9
+    else stats.displayedCash += 1
+  } else if (diff > 0) {
+    if (Math.abs(diff) > 8) stats.displayedCash -= 9
+    else stats.displayedCash -= 1
   }
+
+  cashText.content = `${stats.displayedCash}`
+  console.log('run')
+  if (diff) g.wait(1, changeValue)
 }
+// }
 

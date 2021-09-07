@@ -464,9 +464,9 @@ export let GA = {
       textX = 10,
       textY = 10,
       action = () => console.log(text),
+      size = 14,
       width = 70,
       height = 50,
-      size = 14,
       color = '#080'
       ) => {
 
