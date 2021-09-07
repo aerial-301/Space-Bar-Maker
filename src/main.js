@@ -1,11 +1,11 @@
 import { GA } from './ga_minTest.js'
 import { initCanvasEvents } from './initCanvas.js'
 import { initEquipments, smelter, space } from './initEquipments.js'
-import { elementsMoving, moveElements, removeElement } from './operations.js'
-import { moveToSmelter, toBeSmelted } from './smelt.js'
+import { blockSize, elementsMoving, insertElement, moveElements, removeElement } from './operations.js'
+import { moveToSmelter, startSmelting, toBeSmelted } from './smelt.js'
 
 
-export let uiLayer, mainLayer, buttons = [], uiLayerText, uiLayerBG
+export let objLayer, mainLayer, buttons = [], uiLayerText, uiLayerBG, buttonsLayer
 
 export const mainBelt = []
 const products = []
@@ -68,12 +68,10 @@ g = GA.create(setup)
 g.start()
 
 function buttonPress(b) {
-
-  b.f = '#FFF'
-  
+  b.f = '#aaa'
   g.wait(60, () => {
-    b.f = '#080'
-    g.wait(10, () => main.action = false)
+    b.f = b.oColor
+    g.wait(30, () => main.action = false)
     
   })
 }
@@ -81,51 +79,57 @@ function buttonPress(b) {
 function initButtons() {
   const buttonsHeight = 580
   
-  const r1 = g.simpleButton('r1', 250, buttonsHeight, 8, 10, () => {
-    removeElement(3)
-    moveElements(2)
-    buttonPress(r1)
-  })
+  // const r1 = g.simpleButton('🔻', 314, buttonsHeight, 15, 17, () => {
+  //   removeElement(3)
+  //   moveElements(2)
+  //   buttonPress(r1)
+  // }, 12, 50, 50, '#222')
 
-  const r2 = g.simpleButton('r2', r1.x + r1.width + 4, buttonsHeight, 8, 10, () => {
-    removeElement(2)
-    moveElements(1)
-    buttonPress(r2)
-  })
+  // const r2 = g.simpleButton('🔻', r1.x + r1.width + 4, buttonsHeight, 15, 17, () => {
+  //   removeElement(2)
+  //   moveElements(1)
+  //   buttonPress(r2)
+  // }, 12, 50, 50, '#222')
 
-  const r3 = g.simpleButton('r3', r2.x + r2.width + 4, buttonsHeight, 8, 10, () => {
+  const r3 = g.simpleButton('🔻', 300, buttonsHeight, 30, 17, () => {
     if (!elementsMoving && !smelter.pushed) {
       mainBelt.pop().visible = false
       moveElements(0)
     }
     buttonPress(r3)
-  })
+  }, 12, 80, 50, '#222')
 
-  const push = g.simpleButton('Push', 175, buttonsHeight, 8, 10, () => {
+  const push = g.simpleButton('⭡', 390, buttonsHeight - 60, 18, 24, () => {
+    buttonPress(push)
+
     if (stackSize < 10) {
-      if (!elementsMoving && !smelter.pushed) {
+
+      if (elementsMoving || smelter.push || smelter.running || !smelter.ready) return
+
+      // if (!elementsMoving && !smelter.pushed && !smelter.running) {
         smelter.pushed = true
         stackSize += 1
-        const l = mainBelt.length
-        for (let i = 1; i < 4; i++) {
-          const item = mainBelt[l - i]
-          g.removeItem(mainBelt, item)
-          products.push(item)
-        }
-        products.forEach(p => p.y -= 40)
+        // const l = mainBelt.length
+        // for (let i = 1; i < 2; i++) {
+        const item = mainBelt[mainBelt.length - 1]
+        g.removeItem(mainBelt, item)
+        products.push(item)
+        // }
+        // products.forEach(p => p.y -= blockSize)
+        insertElement(item)
         moveElements()
-      }
+      // }
     }
-    buttonPress(push)
-  })
+    
+  }, 70, 80, 110)
   
-  const smelt = g.simpleButton('Smelt', 100, buttonsHeight, 8, 10, () => {    
+  const smelt = g.simpleButton('>', 310, 420, 23, 10, () => {    
     if (stackSize == 10) {
       if (smelter.ready && !smelter.running) {
         smelter.running = true
         products.forEach(p => toBeSmelted.push(p))
 
-        moveToSmelter()
+        startSmelting()
         stackSize = 0
         products.length = 0
       }
@@ -133,7 +137,8 @@ function initButtons() {
     }
     
     buttonPress(smelt)
-  })
+    
+  }, 20, 60, 40, '#900')
 
 
   repairButton = g.simpleButton('🔧', 10, buttonsHeight - 150, 25, 15, () => {
@@ -161,10 +166,11 @@ function setup(){
   // debug3 = g.makeText(g.stage, 'text 3', 20, '#FFF', 0, 40)
   
   initCanvasEvents()
-  uiLayer = g.group()
+  objLayer = g.group()
   uiLayerBG = g.group()
-  uiLayerText = g.group(uiLayer)
-  mainLayer = g.group(uiLayerBG, uiLayer, uiLayerText)
+  buttonsLayer = g.group()
+  uiLayerText = g.group()
+  mainLayer = g.group(uiLayerBG, objLayer, buttonsLayer, uiLayerText)
 
   const cashIcon = g.makeText(mainLayer, '💰', 20, 0, 10, 10)
   cashText = g.makeText(mainLayer, `${displayedCash}`, 20, '#FFF', 34, 11)
@@ -210,6 +216,8 @@ function setup(){
     totalNum
   )
 
+
+
   // board.visible = false
 
 
@@ -223,7 +231,16 @@ function setup(){
   
 
 
+  const repairBoard = g.group(
+    repairFrame,
+    repairButton,
+    repairText,
+    repairNum
+  )
 
+  repairBoard.y -= 80
+
+  // repairBoard.visible = false
 
   // healthText = g.makeText(mainLayer, `Health: ${smelter.health}`, 13, '#FFF', 304, 460)
 

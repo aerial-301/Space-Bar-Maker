@@ -1,4 +1,4 @@
-import { buttons, main, stats, uiLayer } from "./main.js"
+import { buttons, main, stats, objLayer, buttonsLayer } from "./main.js"
 // import { buttons } from "./main/mainSetUp/initBottomPanel.js"
 
 export let GA = {
@@ -472,6 +472,8 @@ export let GA = {
 
       const button = g.rectangle(width, height, color, 1, x, y)
 
+      button.oColor = color
+
       if (action) {
         buttons.push(button)
         button.action = action
@@ -482,7 +484,7 @@ export let GA = {
       }
         
       // uiElements.push(button)
-      uiLayer.addChild(button)
+      buttonsLayer.addChild(button)
       return button
     }
     // g.xDistance = (a, b) => Math.abs(b.centerX - a.centerX)

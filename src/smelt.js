@@ -1,4 +1,4 @@
-import { smelter, space } from "./initEquipments.js"
+import { bCapacity, smelter, space } from "./initEquipments.js"
 import { cashText, stats, g, valueText, healthText, operationText, totalText, repairText, materialsText, repairButton, valueNum, operationNum, totalNum, repairNum } from "./main.js"
 
 export let toBeSmelted = []
@@ -29,9 +29,13 @@ export function moveToSmelter() {
   }
 }
 
-function startSmelting() {
+export function startSmelting() {
 
-  smeltTime = g.randomNum(150, 400)
+  valueNum.content = 0
+  operationNum.content = 0
+  totalNum.content = 0
+  // smeltTime = g.randomNum(100, 200)
+  smeltTime = 60
   currentSmeltTime = 0
   smelter.readyBar.visible = false
   
@@ -102,15 +106,14 @@ function smelt() {
       smelter.break()
     } else {
       smelter.healthBar.height = healthDifference
-      g.wait(1000, () => {
-        smelter.readyBar.visible = true
-        smelter.running = false
-      })
+      smelter.running = false
+      smelter.readyBar.visible = true
+      // g.wait(1000, () => {
+      // })
     }
 
-
-
     eject()
+    bCapacity.height = 300
   }
 }
 
