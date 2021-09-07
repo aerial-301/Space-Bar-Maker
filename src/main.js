@@ -1,94 +1,25 @@
 import { GA } from './ga_minTest.js'
-import { buttons } from './main/mainSetUp/initBottomPanel.js'
-import { initLayers, uiLayer } from './main/mainSetUp/initLayers.js'
-import { canvas, initCanvasEvents } from './main/mainSetUp/initCanvas.js'
-import { initMap } from './main/mainSetUp/initMap.js'
-import { debugShape } from '../debug.js'
-
-// export const mainCanvas = {
-//   get width() { return 380 },
-//   get height() { return 540}
-//   // get width() { return canvas.width },
-//   // get height() { return canvas.height}
-// }
+import { initCanvasEvents } from './initCanvas.js'
+import { initEquipments, smelter, space } from './initEquipments.js'
+import { blockSize, elementsMoving, insertElement, moveElements, removeElement } from './operations.js'
+import { moveToSmelter, startSmelting, toBeSmelted } from './smelt.js'
 
 
-const objects = [
-  '🎮',
-  '🍴',
-  '🎹',
-  '🎧',
-  '🎥',
-  '🎤',
-  '🏆',
-  '💍',
-  '📎',
-  '📏',
-  '📐',
-  '📞',
-  '📢',
-  '📷',
-  '📼',
-  '📿',
-  '🔧',
-  '📌',
-  '🛒',
-  '🚲'
-]
+export let objLayer, mainLayer, buttons = [], uiLayerText, uiLayerBG, buttonsLayer
 
-const nonSolids = [
-  '🍖',
-  '🍔',
-  '🍕',
-  '🍓',
-  '🍎',
-  '🍉',
-  '🍅',
-  '🍰',
-  '🐁',
-  '🐠',
-  '🐓',
-  '🐌'
-]
-
-const uiStuff = [
-  '💵',
-  '⭐'
-]
-
-const building = [
-  '🏭',
-]
-
-const movingElements = []
-
-let elementsCanMove = true
-
-
-const maxShift = 25
-const moveSteps = 5
-let shiftAmount = 0
-
-
-const mainBelt = []
-
+export const mainBelt = []
 const products = []
+let stackSize = 0
 
-let pushed = false
+export const stats = {
+  currentCash: 1000,
+  displayedCash: 1000,
+  repairCost: 0,
+}
 
-let inserted = 0
-
-const surfaceWidth = 414
-const surfaceHeight = 812
-const cellSize = 73
-const PI = Math.PI
-
-
-let removeElementIndex
-
-const currentAction = {
-  placingBuilding: false,
-  started: false
+export const main = {
+  action: true,
+  process: false,
 }
 
 const K = {
@@ -101,250 +32,241 @@ const K = {
 
 let g
 export let menu
-let solids = []
-let units = []
-let playerUnits = []
-let selectedUnits = []
-let movingUnits = []
-let armedUnits = []
-let enemies = []
-let attackingTarget = []
-let shots = []
-let bloodDrops = []
-let fadeOuts = []
-let miners = []
-
-let removed = false
-
-let debug1
+export let cashText
+export let displayedCash = 1000
 let debug2
 let debug3
+
+export let board
+export let valueText
+export let materialsText
+export let operationText
+
+
+export let totalText
+
+
+export let valueNum
+export let operationNum
+export let totalNum
+export let repairNum
+
+
+
+
+export let repairText
+
+export let healthText
+
+
+export let repairButton
 
 
 export let uiElements = []
 
-
-g = GA.create(mainMenu)
+g = GA.create(setup)
 g.start()
 
-// function setSize(element, p1, p2) {
-//   element.width = mainCanvas.width * p1
-//   element.height = mainCanvas.height * p2
-// }
-
-// export function setPos(element, p1, p2, xOffset = 0, yOffset = 0) {
-//   element.x = mainCanvas.width * p1 + xOffset
-//   element.y = mainCanvas.height * p2 + yOffset
-// }
-
-// export function adjustElement(e, w, h, tx, ty) {
-//   setSize(e, w, h)
-//   if (e.text) {
-//     e.text.x = e.width * tx
-//     e.text.y = e.height * ty
-//   }
-// }
-
 function buttonPress(b) {
-  b.f = '#FFF'
-    g.wait(60, () => b.f = '#800')
-}
-
-function removeElement(n) {
-  if (elementsCanMove && !pushed) {
-    const index = mainBelt.length - n
-    const item = mainBelt[index]
-    if (item) {
-      g.removeItem(mainBelt, item)
-      item.visible = false
-    }
-  }
-}
-
-function addElement(x = 10, y = buttons[0].y - 50) {
-  const randomElement = nonSolids[g.randomNum(0, nonSolids.length)]
-  const t = g.makeText(uiLayer, randomElement, 18, '#FFF', x, y)
-  // t.adjust = () => {
-
-  //   // t.y = uiElements[0]. y - 50
-  //   // if (DynamicSize) adjustElement(button, width, height, textX, textY)
-  //   // if (DynamicPos) setPos(button, xPer, yPer, xOff, -button.height)
-  // }
-  mainBelt.unshift(t)
-  // uiElements.push(t)
-}
-
-function moveElements(n = 0) {
-  if (elementsCanMove) {
-    elementsCanMove = false
-    const index = mainBelt.length - n
-
-    for (let i = 0; i < index; i++) {
-      movingElements.push(mainBelt[i])
-    }
-
-    moveElementsNOW()
-  }
-  
-}
-
-function moveElementsNOW() {
-    for (const item of movingElements) {
-      item.x += moveSteps
-    }
-    if (shiftAmount < maxShift) {
-      g.wait(1, () => moveElementsNOW())
-      
-    } else {
-      shiftAmount = 0
-      
-      addElement()
-      if (pushed) {
-        if (inserted < 2) {
-          inserted += 1
-          movingElements.push(mainBelt[0])
-          moveElementsNOW()
-        } else {
-          pushed = false
-          inserted = 0
-          elementsCanMove = true
-          movingElements.length = 0
-        }
-      } else {
-        elementsCanMove = true
-        movingElements.length = 0
-      }
-    }
-    shiftAmount += moveSteps
-  // }
-}
-
-function mainMenu(){
-  initCanvasEvents()
-  initLayers()
-  // menu = g.simpleButton('>', 0, 1, 0, .4, .4, () => {
-  //   // if (!mainBelt.length) addElement()
-  //   // else moveElements()
-  //   // buttonPress(menu)
-  // }, .15, .1)
-
-  const buttonsHeight = 540
-  
-  const r1 = g.simpleButton('discard', 4, buttonsHeight, 8, 10, () => {
-    removeElement(3)
-    moveElements(2)
-    buttonPress(r1)
+  b.f = '#aaa'
+  g.wait(60, () => {
+    b.f = b.oColor
+    g.wait(30, () => main.action = false)
+    
   })
+}
 
-  const r2 = g.simpleButton('remove', r1.x + r1.width + 4, buttonsHeight, 8, 10, () => {
-    removeElement(2)
-    moveElements(1)
-    buttonPress(r2)
-  })
+function initButtons() {
+  const buttonsHeight = 580
+  
+  // const r1 = g.simpleButton('🔻', 314, buttonsHeight, 15, 17, () => {
+  //   removeElement(3)
+  //   moveElements(2)
+  //   buttonPress(r1)
+  // }, 12, 50, 50, '#222')
 
-  const r3 = g.simpleButton('delete', r2.x + r2.width + 4, buttonsHeight, 8, 10, () => {
-    if (elementsCanMove && !pushed) {
+  // const r2 = g.simpleButton('🔻', r1.x + r1.width + 4, buttonsHeight, 15, 17, () => {
+  //   removeElement(2)
+  //   moveElements(1)
+  //   buttonPress(r2)
+  // }, 12, 50, 50, '#222')
+
+  const r3 = g.simpleButton('🔻', 300, buttonsHeight, 30, 17, () => {
+    if (!elementsMoving && !smelter.pushed) {
       mainBelt.pop().visible = false
       moveElements(0)
     }
     buttonPress(r3)
-  })
+  }, 12, 80, 50, '#222')
 
-  const ok = g.simpleButton('OK', r3.x + r3.width + 4, buttonsHeight, 8, 10, () => {
+  const push = g.simpleButton('⭡', 390, buttonsHeight - 60, 18, 24, () => {
+    buttonPress(push)
 
-    if (elementsCanMove && !pushed) {
-      pushed = true
+    if (stackSize < 10) {
 
-      const l = mainBelt.length
-      for (let i = 1; i < 4; i++) {
-        const item = mainBelt[l - i]
+      if (elementsMoving || smelter.push || smelter.running || !smelter.ready) return
+
+      // if (!elementsMoving && !smelter.pushed && !smelter.running) {
+        smelter.pushed = true
+        stackSize += 1
+        // const l = mainBelt.length
+        // for (let i = 1; i < 2; i++) {
+        const item = mainBelt[mainBelt.length - 1]
         g.removeItem(mainBelt, item)
         products.push(item)
-      }
-      
-      
-      products.forEach(p => p.y -= 40)
-      moveElements()
+        // }
+        // products.forEach(p => p.y -= blockSize)
+        insertElement(item)
+        moveElements()
+      // }
     }
     
-    buttonPress(ok)
-  })
-
-  // const squareWidth = 100
-  // const squareHeight = 100
+  }, 70, 80, 110)
   
-  // uiElements.forEach(e => e.adjust())
+  const smelt = g.simpleButton('>', 310, 420, 23, 10, () => {    
+    if (stackSize == 10) {
+      if (smelter.ready && !smelter.running) {
+        smelter.running = true
+        products.forEach(p => toBeSmelted.push(p))
+
+        startSmelting()
+        stackSize = 0
+        products.length = 0
+      }
+
+    }
+    
+    buttonPress(smelt)
+    
+  }, 20, 60, 40, '#900')
+
+
+  repairButton = g.simpleButton('🔧', 10, buttonsHeight - 150, 25, 15, () => {
+    if (!smelter.ready) {
+      smelter.fix()
+    }
+
+    buttonPress(repairButton)
+  }, 20, 80, 50)
+
+  repairButton.visible = false
 
 
 
-  for (let i = 0; i < 4; i++) {
-    addElement(10 + (25 * (3 - i)))
-  }
-  
-  setup()
+
+
 }
 
-debug1 = g.makeText(g.stage, 'text 1', 20, '#FFF')
-debug2 = g.makeText(g.stage, 'text 2', 20, '#FFF', 0, 20)
-debug3 = g.makeText(g.stage, 'text 2', 20, '#FFF', 0, 40)
+
+
 
 function setup(){
-  // initMap()
+
+  // debug2 = g.makeText(g.stage, 'text 2', 20, '#FFF', 0, 20)
+  // debug3 = g.makeText(g.stage, 'text 3', 20, '#FFF', 0, 40)
+  
+  initCanvasEvents()
+  objLayer = g.group()
+  uiLayerBG = g.group()
+  buttonsLayer = g.group()
+  uiLayerText = g.group()
+  mainLayer = g.group(uiLayerBG, objLayer, buttonsLayer, uiLayerText)
+
+  const cashIcon = g.makeText(mainLayer, '💰', 20, 0, 10, 10)
+  cashText = g.makeText(mainLayer, `${displayedCash}`, 20, '#FFF', 34, 11)
+
+
+  
+  
+  initButtons()
+
+  initEquipments()
+
+  
+  
+  const frame = g.rectangle(170, 120, '#222', 1, 2, 190)
+  uiLayerBG.addChild(frame)
+  const bottomLine = g.rectangle(150, 2, '#fff', 0, 8, 270)
+  uiLayerText.addChild(bottomLine)
+  // result.alpha = 0.5
+  
+  valueText = g.makeText(uiLayerText, 'Value', 13, '#ddd', 8, 198)
+  
+  materialsText = g.makeText(uiLayerText, 'Materials = 0', 13, '#ddd', 8, valueText.y + 15)
+  
+  operationText = g.makeText(uiLayerText, 'Operation', 13, '#ddd', 8, materialsText.y + 15)
+  
+  totalText = g.makeText(uiLayerText, 'Total', 13, '#ddd', 8, 282)
+
+
+  valueNum = g.makeText(uiLayerText, '0', 14, '#0d0', 90, 198)
+  operationNum = g.makeText(uiLayerText, '0', 14, '#d00', 90, materialsText.y + 15)
+  totalNum = g.makeText(uiLayerText, '0', 14, '#ddd', 90, 282)
+  
+
+  
+  board = g.group(
+    frame,
+    bottomLine,
+    valueText,
+    valueNum,
+    operationText,
+    operationNum,
+    totalText,
+    totalNum
+  )
+
+
+
+  // board.visible = false
+
+
+
+  const repairFrame = g.rectangle(170, 100, '#222', 1, 2, 420)
+  uiLayerBG.addChild(repairFrame)
+
+  repairText = g.makeText(uiLayerText, 'Repair Cost', 14, '#ddd', 8, 490)
+  repairNum = g.makeText(uiLayerText, '0', 14, '#d00', 110, 490)
+  
+  
+
+
+  const repairBoard = g.group(
+    repairFrame,
+    repairButton,
+    repairText,
+    repairNum
+  )
+
+  repairBoard.y -= 80
+
+  // repairBoard.visible = false
+
+  // healthText = g.makeText(mainLayer, `Health: ${smelter.health}`, 13, '#FFF', 304, 460)
+
+
+  // fpsDisplay = g.makeText(mainLayer, 'FPS', 24, '#fff', 0, 100)
+
+  // actions = [
+  //   elementsMoving,
+  //   smelter.pushed,
+  //   space.visible,
+  // ]
+
   g.state = play
+  g.wait(90, () => stats.action = false)
 }
 
 function play(){
-
-  debug1.content = `${window.innerWidth}`
-  debug2.content = `${window.innerHeight}`
-
-
-  debug3.content = `canvas ${canvas.width} , ${canvas.height}`
-
-  // if (mainBelt.length < 10) {
-  //   addElement()
-  // }
-  // theText.content = `
-  // ${g.pointer.x.toFixed(2)}
-  // ${g.pointer.y.toFixed(2)}
-  // `
-
-  // theText2.content = `
-  // ${menu.gx.toFixed(2)}
-  // ${menu.gy.toFixed(2)}
-  // `
-
-  // if (g.hitTestPoint(g.pointer, menu)) {
-  //   menu.f = '#FFF'
-  //   g.wait(50, () => {
-  //     menu.f = '#800'
-  //   })
-  //   console.log('pointer = ', g.pointer.x.toFixed(2), g.pointer.y.toFixed(2))
-  //   console.log('button = ', menu.gx, menu.gy)
-  // }
-
   
+  if ([elementsMoving, smelter.running, smelter.pushed, space.visible].every(v => v == false)) {
+    main.process = false 
+  } else {
+    main.process = true
+  }
 
 }
 
 export { 
   g,
-  K,
-  PI,
-  currentAction,
-  surfaceHeight,
-  surfaceWidth,
-  units,
-  playerUnits,
-  selectedUnits,
-  movingUnits,
-  miners,
-  enemies,
-  shots,
-  solids,
-  attackingTarget,
-  armedUnits,
-  bloodDrops,
-  fadeOuts,
-  cellSize
 }

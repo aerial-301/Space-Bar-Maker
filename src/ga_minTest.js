@@ -1,14 +1,11 @@
-// import { world } from './main/mainSetUp/initLayers.js'
-
-import { uiElements } from "./main.js"
-import { buttons } from "./main/mainSetUp/initBottomPanel.js"
-import { uiLayer } from "./main/mainSetUp/initLayers.js"
+import { buttons, main, stats, objLayer, buttonsLayer } from "./main.js"
+// import { buttons } from "./main/mainSetUp/initBottomPanel.js"
 
 export let GA = {
   create(setup) {
     let g = {}
     g.canvas = document.getElementById('c')
-    g.canvas.style.backgroundColor = '#333'
+    g.canvas.style.backgroundColor = '#555'
     g.canvas.ctx = g.canvas.getContext("2d")
     g.stage = makeStage()
     g.pointer = makePointer()
@@ -48,18 +45,19 @@ export let GA = {
         // if (s.alwaysVisible || s.visible && s.gx < canvas.width + s.width && s.gx + s.width >= -s.width && s.gy < canvas.height + s.height && s.gy + s.height >= -s.height) {
         if (s.alwaysVisible || s.visible) {
           ctx.save()
-          if (g.interpolate) {
+          // if (g.interpolate) {
             if (s._previousX !== undefined) s.renderX = (s.x - s._previousX) * lagOffset + s._previousX
             else s.renderX = s.x
             if (s._previousY !== undefined) s.renderY = (s.y - s._previousY) * lagOffset + s._previousY
             else s.renderY = s.y
-          } else {
-          s.renderX = s.x
-          s.renderY = s.y
-          }
+          // } 
+          // else {
+          // s.renderX = s.x
+          // s.renderY = s.y
+          // }
           ctx.translate(s.renderX + (s.width * s.pivotX), s.renderY + (s.height * s.pivotY))
           ctx.globalAlpha = s.alpha
-          ctx.rotate(s.rotation)
+          // ctx.rotate(s.rotation)
           // ctx.scale(s.scaleX, s.scaleY)
           // if (s.blendMode)  ctx.globalCompositeOperation = s.blendMode;
           if (s.render) s.render(ctx)
@@ -109,22 +107,32 @@ export let GA = {
 
     function gameLoop(){
       requestAnimationFrame(gameLoop, g.canvas)
-      if (g._fps === undefined) {
-        update()
+
+      update()
+      if (main.process || main.action || (stats.currentCash != stats.displayedCash)) {
+        // console.log(main.process, main.action)
         g.render(g.canvas, 0)
+        // g.render(g.canvas, 0)
       }
-      else {
-        var current = Date.now(), elapsed = current - g._startTime
-        if (elapsed > 1000) elapsed = g._frameDuration
-        g._startTime = current
-        g._lag += elapsed
-        while (g._lag >= g._frameDuration) {
-          capturePreviousSpritePositions()
-          update()
-          g._lag -= g._frameDuration
-        }
-        g.render(g.canvas, g._lag / g._frameDuration)
-      }
+      // if (!g._fps) {
+        // g.render(g.canvas, 0)
+      // }
+      // else {
+        // let current = Date.now(), elapsed = current - g._startTime
+        // if (elapsed > 1000) elapsed = g._frameDuration
+        // g._startTime = current
+        // g._lag += elapsed
+        // while (g._lag >= g._frameDuration) {
+        //   capturePreviousSpritePositions()
+        //   update()
+        //   g._lag -= g._frameDuration
+        // }
+
+        // if (stats.action || stats.process) {
+        //   g.render(g.canvas, g._lag / g._frameDuration)
+        //   // g.render(g.canvas, 0)
+        // }
+      // }
     }
     function capturePreviousSpritePositions(){
       g.stage.children.forEach(s => setPosition(s))
@@ -297,7 +305,7 @@ export let GA = {
       return true
     }
 
-    g.GlobalDistance = (a, b, aOffX = 0, aOffY = 0) => {return Math.sqrt( ( b.centerX - a.centerX + aOffX)**2 + ( b.centerY - a.centerY + aOffY)**2 )}
+    // g.GlobalDistance = (a, b, aOffX = 0, aOffY = 0) => {return Math.sqrt( ( b.centerX - a.centerX + aOffX)**2 + ( b.centerY - a.centerY + aOffY)**2 )}
     
     g.actx = new AudioContext()
     g.soundEffect = function(frequencyValue, decay, type, volumeValue, pitchBendAmount, reverse, randomValue) {
@@ -390,7 +398,7 @@ export let GA = {
       return o
     }
 
-    g.rectangle = (w, h, k, s = 1, x = 0, y = 0) => {
+    g.rectangle = (w, h, k = '#FFF', s = 1, x = 0, y = 0) => {
       const o = {
         x: x,
         y: y,
@@ -411,28 +419,28 @@ export let GA = {
       return o
     }
 
-    function moreProperties(o){
-      o.target = null
-      o.attacked = false,
-      o.isDamaged = false
-      o.isDead = false
-      o.damagedAmount = 0
-      o.HBscale = 0.5
-      o.yellowHB = g.rectangle((o.health / o.baseHealth) * 100 * o.HBscale, 5, 'Yellow')
-      o.addChild(o.yellowHB)
-      o.yellowHB.y = -10
-      o.HB = g.rectangle((o.health / o.baseHealth) * 100 * o.HBscale, 5, 'green')
-      o.addChild(o.HB)
-      o.HB.y = -10
-      o.HB.visible = false
-      o.yellowHB.visible = false
-    }
+    // function moreProperties(o){
+    //   o.target = null
+    //   o.attacked = false,
+    //   o.isDamaged = false
+    //   o.isDead = false
+    //   o.damagedAmount = 0
+    //   o.HBscale = 0.5
+    //   o.yellowHB = g.rectangle((o.health / o.baseHealth) * 100 * o.HBscale, 5, 'Yellow')
+    //   o.addChild(o.yellowHB)
+    //   o.yellowHB.y = -10
+    //   o.HB = g.rectangle((o.health / o.baseHealth) * 100 * o.HBscale, 5, 'green')
+    //   o.addChild(o.HB)
+    //   o.HB.y = -10
+    //   o.HB.visible = false
+    //   o.yellowHB.visible = false
+    // }
 
     g.makeText = (parent, content, fontSize, fillStyle, x = 0, y = 0) => {
       const o = {
         content: content,
         font: `small-caps ${fontSize}px sans-serif`,
-        fs: fillStyle,
+        fs: fillStyle || '#000',
         textBaseline: "top",
         render(c) {
           c.fillStyle = this.fs
@@ -445,7 +453,7 @@ export let GA = {
         } 
       }
       makeBasicObject(o, x, y, content.length, 20)
-      parent.addChild(o)
+      if (parent) parent.addChild(o)
       return o
     }
 
@@ -456,13 +464,15 @@ export let GA = {
       textX = 10,
       textY = 10,
       action = () => console.log(text),
-      width = 70,
-      height = 40,
       size = 14,
+      width = 70,
+      height = 50,
       color = '#080'
       ) => {
 
       const button = g.rectangle(width, height, color, 1, x, y)
+
+      button.oColor = color
 
       if (action) {
         buttons.push(button)
@@ -474,12 +484,12 @@ export let GA = {
       }
         
       // uiElements.push(button)
-      uiLayer.addChild(button)
+      buttonsLayer.addChild(button)
       return button
     }
-    g.xDistance = (a, b) => Math.abs(b.centerX - a.centerX)
-    g.yDistance = (a, b) => Math.abs(b.centerY - a.centerY)
-    g.addVectors = (a, b) => {return [a[0] + b[0], a[1] + b[1]]}
+    // g.xDistance = (a, b) => Math.abs(b.centerX - a.centerX)
+    // g.yDistance = (a, b) => Math.abs(b.centerY - a.centerY)
+    // g.addVectors = (a, b) => {return [a[0] + b[0], a[1] + b[1]]}
     g.removeItem = (array, item) => {
       const index = array.indexOf(item)
       if (index !== -1) array.splice(index, 1)
