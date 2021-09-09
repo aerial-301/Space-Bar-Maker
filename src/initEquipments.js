@@ -2,7 +2,9 @@ import { g, mainLayer, repairButton, repairNum, stats, objLayer, uiLayerBG } fro
 import { addElement, blockSize } from "./operations.js"
 import { changeValue } from "./smelt.js"
 
-const beltSize = 5
+const beltSize = 6
+
+export const beltStartX = -50
 
 
 
@@ -14,12 +16,9 @@ export let space
 
 export function initEquipments() {
 
-  // const xPos = 25 * (beltSize - 5)
   const xPos = 300
   const yPos = 100
-  // const smelterBaseHealth = 250
 
-  // smelter = g.rectangle(80, 410, '#333', 2, xPos, 110)
   smelter = g.rectangle(80, 410, '#333', 2, xPos, yPos)
   smelter.ready = true
   smelter.running = false
@@ -34,12 +33,9 @@ export function initEquipments() {
 
   smelter.bar = g.rectangle(60, 20, '#ff0', 0, 10, 370)
   smelter.addChild(smelter.bar)
-  // smelter.bar.visible = false
-  
 
   smelter.readyBar = g.rectangle(60, 20, '#0f0', 0, 10, 370)
   smelter.addChild(smelter.readyBar)
-  // smelter.readyBar.visible = false
   
   smelter.breakBar = g.rectangle(60, 20, '#f00', 0, 10, 370)
   smelter.addChild(smelter.breakBar)
@@ -49,8 +45,9 @@ export function initEquipments() {
   const HB = g.rectangle(8, 300, '#0f0', 2, 10, 10)
   smelter.addChild(HB)
 
-  const capacity = g.rectangle(8, 300, '#b50', 2, 62, 10)
-  smelter.addChild(capacity)
+  smelter.capacity = g.rectangle(8, 300, '#bb0', 2, 62, 10)
+  smelter.capacity.full = '#f90'
+  smelter.addChild(smelter.capacity)
 
 
   bCapacity = g.rectangle(8, 300, '#000', 2, 62, 10)
@@ -67,6 +64,17 @@ export function initEquipments() {
     smelter.breakBar.visible = true
     smelter.ready = false
     smelter.running = false
+
+    g.soundEffect(
+      200,          //frequency
+      .5,           //decay
+      "square",  //waveform
+      0.04,           //volume
+      60,           //pitch bend amount
+      false,
+      0,
+      50
+    )
     // smelter.running = false
     // smelter.isWorking = false
   }
@@ -86,10 +94,22 @@ export function initEquipments() {
     smelter.ready = true
     smelter.running = false
     repairButton.visible = false
+    // wrench.play()
+
+    g.soundEffect(
+      80,          //frequency
+      .5,           //decay
+      "triangle",  //waveform
+      0.06,           //volume
+      250,           //pitch bend amount
+      true,
+      0,
+      55
+    )
   }
 
   
-  space = g.rectangle(70, 400, '#777', 2, xPos + 5, 105)
+  space = g.rectangle(70, 380, '#777', 2, xPos + 5, 105)
   space.xOrigin = space.x
   space.yOrigin = space.y
   space.visible = false
@@ -104,7 +124,7 @@ export function initEquipments() {
 
 
   for (let i = 0; i <= beltSize; i++) {
-    addElement(10 + (blockSize * (beltSize - i)))
+    addElement(beltStartX + (blockSize * (beltSize - i)))
   }
 
 

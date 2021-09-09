@@ -1,8 +1,8 @@
-import { buttons, main, stats, objLayer, buttonsLayer } from "./main.js"
+import { buttons, main, stats, buttonsLayer } from "./main.js"
 // import { buttons } from "./main/mainSetUp/initBottomPanel.js"
 
 export let GA = {
-  create(setup) {
+  create(setup, assetsToLoad) {
     let g = {}
     g.canvas = document.getElementById('c')
     g.canvas.style.backgroundColor = '#555'
@@ -18,17 +18,18 @@ export let GA = {
     g._lag = 0
     g.interpolate = true
 
-
     let scaleToFit = Math.min(
       window.innerWidth / g.canvas.width, 
       window.innerHeight / g.canvas.height
     )
     g.canvas.style.transform = "scale(" + scaleToFit + ")";
     const cMargin = (window.innerWidth - g.canvas.width * scaleToFit) / 2
-    console.log(cMargin)
+    // console.log(cMargin)
     g.canvas.style.margin = `0 ${cMargin}px`
     g.scale = scaleToFit
 
+
+    g.assetFilePaths = assetsToLoad || undefined;
 
     g.render = (canvas, lagOffset) => {
       let ctx = canvas.ctx
@@ -138,7 +139,36 @@ export let GA = {
     }
     function update() {if (g.state && !g.paused) g.state()}
     g.start = () => {
-      g.setup()
+
+      if (g.assetFilePaths) {
+
+        //Use the supplied file paths to load the assets then run
+        //the user-defined `setup` function.
+        g.assets.whenLoaded = function() {
+  
+          //Clear the game `state` function for now to stop the loop.
+          g.state = undefined;
+  
+          //Call the `setup` function that was supplied by the user in
+          //Ga's constructor.
+          g.setup();
+        };
+        g.assets.load(g.assetFilePaths);
+  
+        //While the assets are loading, set the user-defined `load`
+        //function as the game state. That will make it run in a loop.
+        //You can use the `load` state to create a loading progress bar.
+        if (g.load) {
+          g.state = g.load;
+        }
+      }
+  
+      //If there aren't any assets to load,
+      //just run the user-defined `setup` function.
+      else {
+        g.setup();
+      }
+      // g.setup()
       gameLoop()
     }
     g.pause = () => g.paused = true
@@ -302,7 +332,7 @@ export let GA = {
     // g.GlobalDistance = (a, b, aOffX = 0, aOffY = 0) => {return Math.sqrt( ( b.centerX - a.centerX + aOffX)**2 + ( b.centerY - a.centerY + aOffY)**2 )}
     
     g.actx = new AudioContext()
-    g.soundEffect = function(frequencyValue, decay, type, volumeValue, pitchBendAmount, reverse, randomValue, attack = 0) {
+    g.soundEffect = function(frequencyValue, decay, type, volumeValue, pitchBendAmount, reverse, randomValue, diss, attack = 0, reverb = 0) {
       let actx = g.actx
       let oscillator, volume, compressor
 
@@ -329,6 +359,8 @@ export let GA = {
       fadeIn(volume)
       fadeOut(volume)
       if (pitchBendAmount > 0) pitchBend(oscillator)
+      if (reverb) addReverb(volume);
+      if (diss) addDissonance()
 
       play(oscillator)
       oscillator.stop(actx.currentTime + 1);
@@ -360,6 +392,101 @@ export let GA = {
           oscillatorNode.frequency.linearRampToValueAtTime(frequency + pitchBendAmount, actx.currentTime + decay + attack)
         }
       }
+
+      function addDissonance() {
+        //Create two more oscillators and gain nodes
+        var d1 = actx.createOscillator(),
+            d2 = actx.createOscillator(),
+            d1Volume = actx.createGain(),
+            d2Volume = actx.createGain();
+  
+        //Set the volume to the `volumeValue`
+        d1Volume.gain.value = volumeValue;
+        d2Volume.gain.value = volumeValue;
+  
+        //Connect the oscillators to the gain and destination nodes
+        d1.connect(d1Volume);
+        d1Volume.connect(actx.destination);
+        d2.connect(d2Volume);
+        d2Volume.connect(actx.destination);
+  
+        //Set the waveform to "sawtooth" for a harsh effect
+        d1.type = "sawtooth";
+        d2.type = "sawtooth";
+  
+        //Make the two oscillators play at frequencies above and
+        //below the main sound's frequency. Use whatever value was
+        //supplied by the `dissonance` argument
+        d1.frequency.value = frequency + diss;
+        d2.frequency.value = frequency - diss;
+  
+        //Fade in/out, pitch bend and play the oscillators
+        //to match the main sound
+        if (attack > 0) {
+          fadeIn(d1Volume);
+          fadeIn(d2Volume);
+        }
+        if (decay > 0) {
+          fadeOut(d1Volume);
+          fadeOut(d2Volume);
+        }
+        if (pitchBendAmount > 0) {
+          pitchBend(d1);
+          pitchBend(d2);
+        }
+        if (reverb) {
+          addReverb(d1Volume);
+          addReverb(d2Volume);
+        }
+        play(d1);
+        play(d2);
+      }
+
+
+      function impulseResponse (duration, decay, reverse, actx) {
+
+        //The length of the buffer.
+        var length = actx.sampleRate * duration;
+    
+        //Create an audio buffer (an empty sound container) to store the reverb effect.
+        var impulse = actx.createBuffer(2, length, actx.sampleRate);
+    
+        //Use `getChannelData` to initialize empty arrays to store sound data for
+        //the left and right channels.
+        var left = impulse.getChannelData(0),
+            right = impulse.getChannelData(1);
+    
+        //Loop through each sample-frame and fill the channel
+        //data with random noise.
+        for (var i = 0; i < length; i++){
+    
+          //Apply the reverse effect, if `reverse` is `true`.
+          var n;
+          if (reverse) {
+            n = length - i;
+          } else {
+            n = i;
+          }
+    
+          //Fill the left and right channels with random white noise which
+          //decays exponentially.
+          left[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
+          right[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
+        }
+    
+        //Return the `impulse`.
+        return impulse;
+      };
+
+
+
+      function addReverb(volumeNode) {
+        var convolver = actx.createConvolver();
+        convolver.buffer = impulseResponse(reverb[0], reverb[1], reverb[2], actx);
+        volumeNode.connect(convolver);
+        convolver.connect(compressor);
+      }
+
 
       function play(node) {
         node.start(actx.currentTime);
@@ -399,6 +526,7 @@ export let GA = {
         width: w,
         height: h,
         f: k,
+        originalF: k
       }
       o.render = (c) => {
         c.lineWidth = s
@@ -497,26 +625,388 @@ export let GA = {
     }
 
 
+    g.assets = {
 
+      //Properties to help track the assets being loaded.
+      toLoad: 0,
+      loaded: 0,
+  
+      //File extensions for different types of assets.
+      imageExtensions: ["png", "jpg", "gif", "webp"],
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+      //The callback function that should run when all assets have loaded.
+      //Assign this when you load the fonts, like this: `assets.whenLoaded = makeSprites;`.
+      whenLoaded: undefined,
+  
+      //The load method creates and loads all the assets. Use it like this:
+      //`assets.load(["images/anyImage.png", "fonts/anyFont.otf"]);`.
+  
+      load: function(sources) {
+        console.log("Loading assets...");
+  
+        //Get a reference to this asset object so we can
+        //refer to it in the `forEach` loop ahead.
+        var self = this;
+  
+        //Find the number of files that need to be loaded.
+        self.toLoad = sources.length;
+        sources.forEach(function(source) {
+  
+          //Find the file extension of the asset.
+          var extension = source.split('.').pop();
+  
+          //#### Images
+          //Load images that have file extensions that match
+          //the `imageExtensions` array.
+          if (self.imageExtensions.indexOf(extension) !== -1) {
+  
+            //Create a new image and add a loadHandler
+            var image = new Image();
+            image.addEventListener("load", function() {
+              //Get the image file name.
+              image.name = source;
+              self[image.name] = {
+                //If you just want the file name and the extension, you can
+                //get it like this:
+                //image.name = source.split("/").pop();
+                //Assign the image as a property of the assets object so
+                //we can access it like this: `assets["images/imageName.png"]`.
+                source: image,
+                frame: {
+                  x: 0,
+                  y: 0,
+                  w: image.width,
+                  h: image.height
+                }
+              };
+              self.loadHandler();
+            }, false);
+  
+            //Set the image's src property so we can start loading the image.
+            image.src = source;
+          }
+  
+          //#### Fonts
+          //Load fonts that have file extensions that match the `fontExtensions` array.
+          else if (self.fontExtensions.indexOf(extension) !== -1) {
+  
+            //Use the font's file name as the `fontFamily` name.
+            var fontFamily = source.split("/").pop().split(".")[0];
+  
+            //Append an `@afont-face` style rule to the head of the HTML
+            //document. It's kind of a hack, but until HTML5 has a
+            //proper font loading API, it will do for now.
+            var newStyle = document.createElement('style');
+            var fontFace = "@font-face {font-family: '" + fontFamily + "'; src: url('" + source + "');}";
+            newStyle.appendChild(document.createTextNode(fontFace));
+            document.head.appendChild(newStyle);
+  
+            //Tell the loadHandler we're loading a font.
+            self.loadHandler();
+          }
+  
+          //#### Sounds
+          //Load audio files that have file extensions that match
+          //the `audioExtensions` array.
+          else if (self.audioExtensions.indexOf(extension) !== -1) {
+            //Create a sound sprite.
+            //
+            var soundSprite = g.makeSound(source, self.loadHandler.bind(self));
+  
+            //Get the sound file name.
+            soundSprite.name = source;
+  
+            //If you just want to extract the file name with the
+            //extension, you can do it like this:
+            //soundSprite.name = source.split("/").pop();
+            //Assign the sound as a property of the assets object so
+            //we can access it like this: `assets["sounds/sound.mp3"]`.
+            self[soundSprite.name] = soundSprite;
+          }
+  
+          //#### JSON
+          //Load JSON files that have file extensions that match
+          //the `jsonExtensions` array.
+          else if (self.jsonExtensions.indexOf(extension) !== -1) {
+  
+            //Create a new `xhr` object and an object to store the file.
+            var xhr = new XMLHttpRequest();
+            var file = {};
+  
+            //Use xhr to load the JSON file.
+            xhr.open("GET", source, true);
+            xhr.addEventListener("readystatechange", function() {
+  
+              //Check to make sure the file has loaded properly.
+              if (xhr.status === 200 && xhr.readyState === 4) {
+  
+                //Convert the JSON data file into an ordinary object.
+                file = JSON.parse(xhr.responseText);
+  
+                //Get the file name.
+                file.name = source;
+  
+                //Assign the file as a property of the assets object so
+                //we can access it like this: `assets["file.json"]`.
+                self[file.name] = file;
+  
+                //Texture Packer support.
+                //If the file has a `frames` property then its in Texture
+                //Packer format.
+                if (file.frames) {
+  
+                  //Create the tileset frames.
+                  self.createTilesetFrames(file, source);
+                } else {
+  
+                  //Alert the load handler that the file has loaded.
+                  self.loadHandler();
+                }
+              }
+            });
+  
+            //Send the request to load the file.
+            xhr.send();
+          }
+  
+          //Display a message if a file type isn't recognized.
+          else {
+            console.log("File type not recognized: " + source);
+          }
+        });
+      },
+  
+      //#### createTilesetFrames
+      //`createTilesetFrames` parses the JSON file  texture atlas and loads the frames
+      //into this `assets` object.
+      createTilesetFrames: function(json, source) {
+        var self = this;
+  
+        //Get the image's file path.
+        var baseUrl = source.replace(/[^\/]*$/, '');
+        var image = new Image();
+        image.addEventListener("load", loadImage, false);
+        image.src = baseUrl + json.meta.image;
+  
+        function loadImage() {
+  
+          //Assign the image as a property of the `assets` object so
+          //we can access it like this:
+          //`assets["images/imageName.png"]`.
+          self[baseUrl + json.meta.image] = {
+            source: image,
+            frame: {
+              x: 0,
+              y: 0,
+              w: image.width,
+              h: image.height
+            }
+          };
+  
+          //Loop through all the frames.
+          Object.keys(json.frames).forEach(function(tilesetImage) {
+  
+            //console.log(json.frames[image].frame);
+            //The `frame` object contains all the size and position
+            //data.
+            //Add the frame to the asset object so that we
+            //can access it like this: `assets["frameName.png"]`.
+            self[tilesetImage] = json.frames[tilesetImage];
+  
+            //Get a reference to the source so that it will be easy for
+            //us to access it later.
+            self[tilesetImage].source = image;
+            //console.log(self[tilesetImage].source)
+          });
+  
+          //Alert the load handler that the file has loaded.
+          self.loadHandler();
+        }
+      },
+  
+      //#### loadHandler
+      //The `loadHandler` will be called each time an asset finishes loading.
+      loadHandler: function() {
+        var self = this;
+        self.loaded += 1;
+        console.log(self.loaded);
+  
+        //Check whether everything has loaded.
+        if (self.toLoad === self.loaded) {
+  
+          //If it has, run the callback function that was assigned to the `whenLoaded` property
+  
+          //Reset `loaded` and `toLoaded` so we can load more assets
+          //later if we want to.
+          self.toLoad = 0;
+          self.loaded = 0;
+          self.whenLoaded();
+        }
+      }
+    };
+    
+    g.sprite = function(source) {
+      var o = {};
+  
+      //If no `source` is provided, alert the user.
+      if (source === undefined) throw new Error("Sprites require a source");
+  
+      //Make this a display object.
+      makeBasicObject(o);
+      o.frames = [];
+      o.loop = true;
+      o._currentFrame = 0;
+  
+      //This next part is complicated. The code has to figure out what
+      //the source is referring to, and then assign its properties
+      //correctly to the sprite's properties. Read carefully!
+      o.setTexture = function(source) {
+        //If the source is just an ordinary string, use it to create the
+        //sprite.
+        if (!source.image) {
+          //If the source isn't an array, then it must be a single image.
+          if (!(source instanceof Array)) {
+            //Is the string referring to a tileset frame from a Texture Packer JSON
+            //file, or is it referring to a JavaScript Image object? Let's find out.
+  
+            //No, it's not an Image object. So it must be a tileset frame
+            //from a texture atlas.
+  
+            //Use the texture atlas's properties to assign the sprite's
+            //properties.
+            o.tilesetFrame = g.assets[source];
+            o.source = o.tilesetFrame.source;
+            o.sourceX = o.tilesetFrame.frame.x;
+            o.sourceY = o.tilesetFrame.frame.y;
+            o.width = o.tilesetFrame.frame.w;
+            o.height = o.tilesetFrame.frame.h;
+            o.sourceWidth = o.tilesetFrame.frame.w;
+            o.sourceHeight = o.tilesetFrame.frame.h;
+  
+            //The source is an array. But what kind of array? Is it an array
+            //Image objects or an array of texture atlas frame ids?
+          } else {
+            //The source is an array of frames on a texture atlas tileset.
+            o.frames = source;
+            o.source = g.assets[source[0]].source;
+            o.sourceX = g.assets[source[0]].frame.x;
+            o.sourceY = g.assets[source[0]].frame.y;
+            o.width = g.assets[source[0]].frame.w;
+            o.height = g.assets[source[0]].frame.h;
+            o.sourceWidth = g.assets[source[0]].frame.w;
+            o.sourceHeight = g.assets[source[0]].frame.h;
+          }
+        }
+  
+        //If the source contains an `image` sub-property, this must
+        //be a `frame` object that's defining the rectangular area of an inner sub-image
+        //Use that sub-image to make the sprite. If it doesn't contain a
+        //`data` property, then it must be a single frame.
+        else if (source.image && !source.data) {
+          //Throw an error if the source is not an image file.
+          if (!(g.assets[source.image].source instanceof Image)) {
+            throw new Error(source.image + " is not an image file");
+          }
+          o.source = g.assets[source.image].source;
+          o.sourceX = source.x;
+          o.sourceY = source.y;
+          o.width = source.width;
+          o.height = source.height;
+          o.sourceWidth = source.width;
+          o.sourceHeight = source.height;
+        }
+  
+        //If the source contains an `image` sub-property
+        //and a `data` property, then it contains multiple frames
+        else if (source.image && source.data) {
+          o.source = g.assets[source.image].source;
+          o.frames = source.data;
+  
+          //Set the sprite to the first frame
+          o.sourceX = o.frames[0][0];
+          o.sourceY = o.frames[0][1];
+          o.width = source.width;
+          o.height = source.height;
+          o.sourceWidth = source.width;
+          o.sourceHeight = source.height;
+        }
+      };
+  
+      //Use `setTexture` to change a sprite's source image
+      //while the game is running
+      o.setTexture(source);
+  
+      //Add a `gotoAndStop` method to go to a specific frame.
+      o.gotoAndStop = function(frameNumber) {
+        if (o.frames.length > 0) {
+  
+          //If each frame is an array, then the frames were made from an
+          //ordinary Image object using the `frames` method.
+          if (o.frames[0] instanceof Array) {
+            o.sourceX = o.frames[frameNumber][0];
+            o.sourceY = o.frames[frameNumber][1];
+          }
+  
+          //If each frame isn't an array, and it has a sub-object called `frame`,
+          //then the frame must be a texture atlas id name.
+          //In that case, get the source position from the `frame` object.
+          else if (g.assets[o.frames[frameNumber]].frame) {
+            o.source = g.assets[o.frames[frameNumber]].source;
+            o.sourceX = g.assets[o.frames[frameNumber]].frame.x;
+            o.sourceY = g.assets[o.frames[frameNumber]].frame.y;
+            o.sourceWidth = g.assets[o.frames[frameNumber]].frame.w;
+            o.sourceHeight = g.assets[o.frames[frameNumber]].frame.h;
+            o.width = g.assets[o.frames[frameNumber]].frame.w;
+            o.height = g.assets[o.frames[frameNumber]].frame.h;
+          }
+  
+          //Set the `_currentFrame` value.
+          o._currentFrame = frameNumber;
+        } else {
+          throw new Error("Frame number " + frameNumber + "doesn't exist");
+        }
+      };
+  
+      //Set the sprite's getters
+      o.x = 0;
+      o.y = 0;
+  
+      //If the sprite has more than one frame, add a state player
+      if (o.frames.length > 0) {
+        g.addStatePlayer(o);
+  
+        //Add a getter for the `_currentFrames` property.
+        Object.defineProperty(o, "currentFrame", {
+          get: function() {
+            return o._currentFrame;
+          },
+          enumerable: false,
+          configurable: false
+        });
+      }
+  
+      //Add the sprite to the stage
+      g.stage.addChild(o);
+  
+      //A `render` method that describes how to draw the sprite
+      o.render = function(ctx) {
+        ctx.drawImage(
+          o.source,
+          o.sourceX, o.sourceY,
+          o.sourceWidth, o.sourceHeight, -o.width * o.pivotX, -o.height * o.pivotY,
+          o.width, o.height
+        );
+      };
+  
+      //Return the sprite
+      return o;
+    };
 
 
 
     return g
   }
 }
+
+
+
