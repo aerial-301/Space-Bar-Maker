@@ -12,12 +12,12 @@ export const initCanvasEvents = () => {
 window.onresize = resize
 
 function resize () {
-  // canvas.height = window.innerHeight
   let scaleToFit = Math.min(
     window.innerWidth / g.canvas.width, 
     window.innerHeight / g.canvas.height
   )
-  g.canvas.style.transformOrigin = "0 0";
   g.canvas.style.transform = "scale(" + scaleToFit + ")";
+  const cMargin = (window.innerWidth - g.canvas.width * scaleToFit) / 2
+  g.canvas.style.margin = `0 ${cMargin}px`
   g.scale = scaleToFit
 }

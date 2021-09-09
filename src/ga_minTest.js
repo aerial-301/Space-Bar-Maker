@@ -18,23 +18,17 @@ export let GA = {
     g._lag = 0
     g.interpolate = true
 
-    // g.setCanvasSize = () => {
-    //   g.canvas.width = window.innerWidth
-    //   g.canvas.height = window.innerHeight - 15
-    // }
 
-    // g.setCanvasSize()
-    // g.canvas.height = Math.min(g.canvas.width * 2.5, window.innerHeight)
-    // let scaleToFit = Math.min(g.canvas.width / window.innerWidth, g.canvas.height / window.innerHeight)
-    // // let scaleToFit = Math.min(window.innerWidth, window.innerHeight)
     let scaleToFit = Math.min(
       window.innerWidth / g.canvas.width, 
       window.innerHeight / g.canvas.height
     )
-    g.canvas.style.transformOrigin = "0 0";
     g.canvas.style.transform = "scale(" + scaleToFit + ")";
+    const cMargin = (window.innerWidth - g.canvas.width * scaleToFit) / 2
+    console.log(cMargin)
+    g.canvas.style.margin = `0 ${cMargin}px`
     g.scale = scaleToFit
-    // g.scale = 1
+
 
     g.render = (canvas, lagOffset) => {
       let ctx = canvas.ctx
@@ -308,7 +302,7 @@ export let GA = {
     // g.GlobalDistance = (a, b, aOffX = 0, aOffY = 0) => {return Math.sqrt( ( b.centerX - a.centerX + aOffX)**2 + ( b.centerY - a.centerY + aOffY)**2 )}
     
     g.actx = new AudioContext()
-    g.soundEffect = function(frequencyValue, decay, type, volumeValue, pitchBendAmount, reverse, randomValue) {
+    g.soundEffect = function(frequencyValue, decay, type, volumeValue, pitchBendAmount, reverse, randomValue, attack = 0) {
       let actx = g.actx
       let oscillator, volume, compressor
 
@@ -337,33 +331,33 @@ export let GA = {
       if (pitchBendAmount > 0) pitchBend(oscillator)
 
       play(oscillator)
-      oscillator.stop(actx.currentTime + 0.5);
+      oscillator.stop(actx.currentTime + 1);
 
       function fadeIn(volumeNode) {
         volumeNode.gain.value = 0;
         volumeNode.gain.linearRampToValueAtTime(
-          0, actx.currentTime
+          0, actx.currentTime + attack
         );
         volumeNode.gain.linearRampToValueAtTime(
-          volumeValue, actx.currentTime + 0.05
+          volumeValue, actx.currentTime + attack
         );
       }
 
       function fadeOut(volumeNode) {
-        volumeNode.gain.linearRampToValueAtTime(volumeValue, actx.currentTime)
-        volumeNode.gain.linearRampToValueAtTime(0, actx.currentTime + decay)
+        volumeNode.gain.linearRampToValueAtTime(volumeValue, actx.currentTime + attack)
+        volumeNode.gain.linearRampToValueAtTime(0, actx.currentTime + decay + attack)
       }
 
       function pitchBend(oscillatorNode) {
         var frequency = oscillatorNode.frequency.value
         if (!reverse) {
           oscillatorNode.frequency.linearRampToValueAtTime(frequency, actx.currentTime)
-          oscillatorNode.frequency.linearRampToValueAtTime(frequency - pitchBendAmount, actx.currentTime + decay)
+          oscillatorNode.frequency.linearRampToValueAtTime(frequency - pitchBendAmount, actx.currentTime + decay + attack)
         }
 
         else {
           oscillatorNode.frequency.linearRampToValueAtTime(frequency, actx.currentTime)
-          oscillatorNode.frequency.linearRampToValueAtTime(frequency + pitchBendAmount, actx.currentTime + decay)
+          oscillatorNode.frequency.linearRampToValueAtTime(frequency + pitchBendAmount, actx.currentTime + decay + attack)
         }
       }
 
@@ -381,22 +375,22 @@ export let GA = {
       L = (c, x, y) => c.lineTo(x, y),
       FR = (c, x, y, w, h) => c.fillRect(x, y, w, h)
 
-    g.circle = (d, k, l, x = 0, y = 0) => {
-      const o = {
-        f: k,
-        radius: d / 2 
-      }
-      o.render = (c) => {
-        c.lineWidth = l
-        c.fillStyle = o.f
-        BP(c)
-        c.arc(o.radius + (-o.radius * 2 * o.pivotX), o.radius + (-o.radius * 2 * o.pivotY), o.radius, 0, 2 * PI, false)
-        if (l) SK()
-        FL(c)
-      }
-      makeBasicObject(o, x, y, d, d)
-      return o
-    }
+    // g.circle = (d, k, l, x = 0, y = 0) => {
+    //   const o = {
+    //     f: k,
+    //     radius: d / 2 
+    //   }
+    //   o.render = (c) => {
+    //     c.lineWidth = l
+    //     c.fillStyle = o.f
+    //     BP(c)
+    //     c.arc(o.radius + (-o.radius * 2 * o.pivotX), o.radius + (-o.radius * 2 * o.pivotY), o.radius, 0, 2 * PI, false)
+    //     if (l) SK()
+    //     FL(c)
+    //   }
+    //   makeBasicObject(o, x, y, d, d)
+    //   return o
+    // }
 
     g.rectangle = (w, h, k = '#FFF', s = 1, x = 0, y = 0) => {
       const o = {

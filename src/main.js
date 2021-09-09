@@ -68,6 +68,9 @@ g = GA.create(setup)
 g.start()
 
 function buttonPress(b) {
+
+  // g.soundEffect = function(frequencyValue, decay, type, volumeValue, pitchBendAmount, reverse, randomValue)
+  
   b.f = '#aaa'
   g.wait(60, () => {
     b.f = b.oColor
@@ -100,12 +103,14 @@ function initButtons() {
   }, 12, 80, 50, '#222')
 
   const push = g.simpleButton('⭡', 390, buttonsHeight - 60, 18, 24, () => {
+    
     buttonPress(push)
 
     if (stackSize < 10) {
 
       if (elementsMoving || smelter.push || smelter.running || !smelter.ready) return
-
+      g.soundEffect(110, .2, 'sine', 0.2, 1000, true, 0)
+      // g.soundEffect(1000, .3, 'triangle', 0.2, 500, false, 0, 0.2)
       // if (!elementsMoving && !smelter.pushed && !smelter.running) {
         smelter.pushed = true
         stackSize += 1
