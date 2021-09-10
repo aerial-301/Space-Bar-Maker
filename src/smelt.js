@@ -1,17 +1,22 @@
+import { data } from "./loadSavedData.js"
+import { g, stats, statsKey } from "./main.js"
+import { repairButton } from "./initButtons.js"
 import { bCapacity, smelter, space } from "./initEquipments.js"
-import { cashText, stats, g, repairButton, valueNum, operationNum, totalNum, repairNum } from "./main.js"
+import { cashText, operationNum, repairNum, totalNum, valueNum } from "./initLeftDisplays.js"
+
+const productsMaxMove = 75
+const smeltTime = 60
 
 export let toBeSmelted = []
-const productsMaxMove = 75
 let productsMoveAmount = 0
-let smeltTime, currentSmeltTime, spaceValue
-
+let currentSmeltTime
+let spaceValue
 let operationCost
 let materials
 let healthDifference
 let total
-
 let materialsSet = []
+
 
 export function moveToSmelter() {
   if (productsMoveAmount < productsMaxMove) {
@@ -34,8 +39,6 @@ export function startSmelting() {
   valueNum.content = 0
   operationNum.content = 0
   totalNum.content = 0
-  // smeltTime = g.randomNum(100, 200)
-  smeltTime = 60
   currentSmeltTime = 0
   smelter.readyBar.visible = false
   
@@ -52,9 +55,7 @@ export function startSmelting() {
   
   materials = materialsSet.length
 
-  
-
-  operationCost = (materials * 10) + 2 ** (materials / 3) | 0
+  operationCost = (materials * 50) + (0 | 2 ** (materials))
 
   toBeSmelted.forEach(p => {
     spaceValue += p.value
@@ -90,7 +91,6 @@ function smelt() {
       smelter.readyBar.visible = true
     }
 
-    // machineLoop.pause()
     eject()
     bCapacity.height = 300
     smelter.capacity.f = smelter.capacity.originalF
@@ -114,9 +114,15 @@ function eject() {
     operationNum.content = operationCost
     totalNum.content = total
     stats.currentCash += total
+
+    data.currentCash = stats.currentCash
+    data.repairCost = stats.repairCost
+    data.machineHealth = smelter.health
+
+    localStorage[statsKey] = JSON.stringify(data)
+
     changeValue()
     g.wait(1500, moveUp)
-    
   }
 }
 
@@ -126,15 +132,11 @@ function moveUp() {
     space.y -= 7
     g.wait(1, moveUp)
   } else {
-    
     space.visible = false
     space.x = space.xOrigin
     space.y = space.yOrigin
-
-
   }
 }
-
 
 let diff 
 export function changeValue() {
@@ -146,8 +148,6 @@ export function changeValue() {
     if (Math.abs(diff) > 8) stats.displayedCash -= 9
     else stats.displayedCash -= 1
   }
-
   cashText.content = `${stats.displayedCash}`
-  // console.log('run')
   if (diff) g.wait(1, changeValue)
 }

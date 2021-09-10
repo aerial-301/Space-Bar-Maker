@@ -1,11 +1,11 @@
+import { stackSize } from "./initButtons.js"
 import { bCapacity, beltStartX, smelter } from "./initEquipments.js"
-import { buttons, buttonsHeight, g, mainBelt, maxStackSize, stackSize, uiLayerBG } from "./main.js"
+import { buttonsHeight, g, mainBelt, maxStackSize, uiLayerBG } from "./main.js"
 
 const objects = [
   '📌',
   '📏',
   '📼',
-  // '🔧',
   '📞',
   '🛒',
   '📢',
@@ -29,12 +29,6 @@ const nonSolids = [
   '🐓',
   '🐠',
   '🐁',
-]
-
-const uiStuff = [
-  '💰',
-  '💵',
-  '⭐'
 ]
 
 const movingElements = []
@@ -61,12 +55,13 @@ export function removeElement(n) {
 let isMetal
 
 export function addElement(x = beltStartX, y = buttonsHeight - 50) {
+  // RE DO
   if (Math.random() > .5) {
     index = g.randomNum(0, objects.length)
     randomElement = objects[index]
     isMetal = true
     index += 1
-    damage = 1
+    damage = g.randomNum(1, 7)
   } else {
     index = g.randomNum(0, nonSolids.length)
     randomElement = nonSolids[index]

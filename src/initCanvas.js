@@ -6,7 +6,6 @@ export const initCanvasEvents = () => {
   canvas = document.getElementById('c')
   canvas.addEventListener('contextmenu', e => e.preventDefault())
   canvas.addEventListener('pointerdown', e => pointerDown(e))
-  // canvas.addEventListener('pointerup', e => pointerUp(e))
 }
 
 window.onresize = resize

@@ -1,19 +1,15 @@
-import { g, mainLayer, repairButton, repairNum, stats, objLayer, uiLayerBG } from "./main.js"
+import { repairButton } from "./initButtons.js"
+import { repairNum } from "./initLeftDisplays.js"
+import { data } from "./loadSavedData.js"
+import { g, mainLayer, objLayer, stats, statsKey, uiLayerBG } from "./main.js"
 import { addElement, blockSize } from "./operations.js"
 import { changeValue } from "./smelt.js"
 
 const beltSize = 6
-
 export const beltStartX = -50
-
-
-
 export let smelter
 export let space
-
-
- export let bCapacity
-
+export let bCapacity
 export function initEquipments() {
 
   const xPos = 300
@@ -24,7 +20,7 @@ export function initEquipments() {
   smelter.running = false
   smelter.pushed = false
   smelter.baseHealth = 300
-  smelter.health = smelter.baseHealth
+  smelter.health = stats.machineHealth
 
   objLayer.addChild(smelter)
 
@@ -41,7 +37,6 @@ export function initEquipments() {
   smelter.addChild(smelter.breakBar)
   smelter.breakBar.visible = false
 
-
   const HB = g.rectangle(8, 300, '#0f0', 2, 10, 10)
   smelter.addChild(HB)
 
@@ -49,83 +44,57 @@ export function initEquipments() {
   smelter.capacity.full = '#f90'
   smelter.addChild(smelter.capacity)
 
-
   bCapacity = g.rectangle(8, 300, '#000', 2, 62, 10)
   smelter.addChild(bCapacity)
 
-
-  
-  smelter.healthBar = g.rectangle(8, 0, '#000', 0, xPos + 10, yPos + 10)
+  const hbHeight = stats.machineHealth <= 0 ? 300 : smelter.baseHealth - stats.machineHealth
+  smelter.healthBar = g.rectangle(8, hbHeight, '#000', 0, xPos + 10, yPos + 10)
   mainLayer.addChild(smelter.healthBar)
-  // smelter.healthBar.visible = false
-  
 
   smelter.break = () => {
     smelter.breakBar.visible = true
     smelter.ready = false
     smelter.running = false
-
-    g.soundEffect(
-      200,          //frequency
-      .5,           //decay
-      "square",  //waveform
-      0.04,           //volume
-      60,           //pitch bend amount
-      false,
-      0,
-      50
-    )
-    // smelter.running = false
-    // smelter.isWorking = false
+    g.soundEffect(200, .5, "square", 0.04, 60, false, 0, 50)
   }
   
   smelter.fix = () => {
     stats.currentCash -= stats.repairCost
     changeValue()
     stats.repairCost = 0
-    // repairText.content = `Repair Cost = ${stats.repairCost}`
     repairNum.content = 0
-
     smelter.health = smelter.baseHealth
-    // healthText.content = `Health: ${smelter.health}`
     smelter.healthBar.height = 0
     smelter.breakBar.visible = false
     smelter.readyBar.visible = true
     smelter.ready = true
     smelter.running = false
     repairButton.visible = false
-    // wrench.play()
+    g.soundEffect( 80, .5, "triangle", 0.06, 250, true, 0, 55)
 
-    g.soundEffect(
-      80,          //frequency
-      .5,           //decay
-      "triangle",  //waveform
-      0.06,           //volume
-      250,           //pitch bend amount
-      true,
-      0,
-      55
-    )
+    data.repairCost = 0
+    data.currentCash = stats.currentCash
+    data.machineHealth = smelter.baseHealth
+    localStorage[statsKey] = JSON.stringify(data)
   }
 
-  
   space = g.rectangle(70, 380, '#777', 2, xPos + 5, 105)
   space.xOrigin = space.x
   space.yOrigin = space.y
   space.visible = false
   uiLayerBG.addChild(space)
-  // mainLayer.addChild(space)
-
 
   const packaging = g.rectangle(100, 50, '#333', 1, 180, 0)
   mainLayer.addChild(packaging)
-
-
-
 
   for (let i = 0; i <= beltSize; i++) {
     addElement(beltStartX + (blockSize * (beltSize - i)))
   }
 
-
+  if (smelter.health <= 0) {
+    repairButton.visible = true
+    smelter.breakBar.visible = true
+    smelter.ready = false
+    smelter.running = false
+  }
 }
