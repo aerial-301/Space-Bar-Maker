@@ -1,6 +1,12 @@
-import { stackSize } from "./initButtons.js"
-import { bCapacity, beltStartX, smelter } from "./initEquipments.js"
-import { buttonsHeight, g, mainBelt, maxStackSize, uiLayerBG } from "./main.js"
+import { g } from "./main.js"
+import { buttonsHeight, stackSize } from "./Setup/initButtons.js"
+import { bCapacity, machine } from "./Setup/initEquipments.js"
+import { uiLayerBG } from "./Setup/initLayers.js"
+
+export const maxStackSize = 10
+const moveSteps = 5
+const beltSize = 6
+const beltStartX = -50
 
 const objects = [
   '📌',
@@ -33,16 +39,16 @@ const nonSolids = [
 
 const movingElements = []
 
+export const mainBelt = []
 export const blockSize = 60
 
-const moveSteps = 5
 let shiftAmount = 0
 let randomElement
 let index, damage
 export let elementsMoving = false
 
 export function removeElement(n) {
-  if (!elementsMoving && !smelter.pushed) {
+  if (!elementsMoving && !machine.pushed) {
     const index = mainBelt.length - n
     const item = mainBelt[index]
     if (item) {
@@ -55,7 +61,6 @@ export function removeElement(n) {
 let isMetal
 
 export function addElement(x = beltStartX, y = buttonsHeight - 50) {
-  // RE DO
   if (Math.random() > .5) {
     index = g.randomNum(0, objects.length)
     randomElement = objects[index]
@@ -105,7 +110,7 @@ export function insertElement(item) {
     item.visible = false
     bCapacity.height -= 30
     if (stackSize == maxStackSize) {
-      smelter.capacity.f = smelter.capacity.full
+      machine.capacity.f = machine.capacity.full
     }
   }
 }
@@ -117,14 +122,22 @@ function moveElementsNOW() {
   shiftAmount += moveSteps
   if (shiftAmount < blockSize) {
     g.wait(1, () => moveElementsNOW())
-    
+    return
   } else {
     shiftAmount = 0
     addElement()
     movingElements.length = 0
     g.wait(7, () => {
       elementsMoving = false
-      smelter.pushed = false
+      machine.pushed = false
     })
+  }
+}
+
+
+export function fillBelt() {
+  // Fill belt with items at game start
+  for (let i = 0; i <= beltSize; i++) {
+    addElement(beltStartX + (blockSize * (beltSize - i)))
   }
 }

@@ -1,4 +1,5 @@
-import { g, statsKey } from "./main.js"
+import { g } from "../main.js"
+import { LS, statsKey } from "./loadSavedData.js"
 
 let deleteSaveWindow
 let isDeleteSave = false
@@ -10,14 +11,13 @@ export function initDeleteSaveWindow() {
     if (isDeleteSave) {
       isDeleteSave = false
       deleteSaveWindow.visible = false
-      localStorage.removeItem(statsKey)
+      LS.removeItem(statsKey)
       location.reload()
       return false
     }
   }, 24, 50, 30, '#F00')
   const no = g.simpleButton('No', 20, 130, 95, 50, () => {
     if (isDeleteSave) {
-      console.log('no')
       deleteSaveWindow.visible = false
       isDeleteSave = false
     }

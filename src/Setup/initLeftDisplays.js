@@ -1,5 +1,7 @@
-import { g, mainLayer, stats, uiLayerBG, uiLayerText } from "./main.js"
+import { g } from "../main.js"
 import { repairButton } from "./initButtons.js"
+import { mainLayer, uiLayerBG, uiLayerText } from "./initLayers.js"
+import { stats } from "./loadSavedData.js"
 
 export let cashText
 export let board

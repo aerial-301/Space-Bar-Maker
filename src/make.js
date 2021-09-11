@@ -1,15 +1,13 @@
-import { data } from "./loadSavedData.js"
-import { g, stats, statsKey } from "./main.js"
-import { repairButton } from "./initButtons.js"
-import { bCapacity, smelter, space } from "./initEquipments.js"
-import { cashText, operationNum, repairNum, totalNum, valueNum } from "./initLeftDisplays.js"
+import { g } from "./main.js"
+import { data, LS, stats, statsKey } from "./Setup/loadSavedData.js"
+import { repairButton } from "./Setup/initButtons.js"
+import { bCapacity, machine, space } from "./Setup/initEquipments.js"
+import { cashText, operationNum, repairNum, totalNum, valueNum } from "./Setup/initLeftDisplays.js"
 
-const productsMaxMove = 75
-const smeltTime = 60
+const processTime = 100
 
-export let toBeSmelted = []
-let productsMoveAmount = 0
-let currentSmeltTime
+export let toBeProcessed = []
+let currentProcessTime
 let spaceValue
 let operationCost
 let materials
@@ -17,83 +15,58 @@ let healthDifference
 let total
 let materialsSet = []
 
-
-export function moveToSmelter() {
-  if (productsMoveAmount < productsMaxMove) {
-    productsMoveAmount += 5
-    toBeSmelted.forEach(p => p.x -= 5)
-    g.wait(5, () => {
-      moveToSmelter()
-    })
-  } else {
-    productsMoveAmount = 0
-    valueNum.content = 0
-    operationNum.content = 0
-    totalNum.content = 0
-    startSmelting()
-  }
-}
-
-export function startSmelting() {
-
+export function startProcessing() {
   valueNum.content = 0
   operationNum.content = 0
   totalNum.content = 0
-  currentSmeltTime = 0
-  smelter.readyBar.visible = false
-  
-  smelt()
+  currentProcessTime = 0
+  machine.readyBar.visible = false
+  machineProcess()
 
   spaceValue = 0
   materialsSet.length = 0
-
-  toBeSmelted.forEach(e => {
-    if (materialsSet.findIndex(u => u.content == e.content) == -1) {
-      materialsSet.push(e)
-    }
+  toBeProcessed.forEach(e => {
+    if (materialsSet.findIndex(u => u.content == e.content) == -1) materialsSet.push(e)
   })
   
   materials = materialsSet.length
-
   operationCost = (materials * 50) + (0 | 2 ** (materials))
 
-  toBeSmelted.forEach(p => {
+  toBeProcessed.forEach(p => {
     spaceValue += p.value
-    smelter.health -= p.damage
+    machine.health -= p.damage
     stats.repairCost += p.damage * 10
     g.remove(p)
   })
 
-  healthDifference = smelter.baseHealth - smelter.health
-
-  toBeSmelted.length = 0
+  healthDifference = machine.baseHealth - machine.health
+  toBeProcessed.length = 0
 }
 
-function smelt() {
-  if (currentSmeltTime < smeltTime) {
-    currentSmeltTime += 1
-    smelter.bar.width = (currentSmeltTime / smeltTime) * 60
-    g.wait(5, () => smelt())
+function machineProcess() {
+  if (currentProcessTime < processTime) {
+    currentProcessTime += 1
+    machine.bar.width = (currentProcessTime / processTime) * 60
+    g.wait(5, () => machineProcess())
   } else {
     leftAmount = 0
     upAmount = 0
     space.visible = true
-
     repairNum.content = stats.repairCost
 
-    if (smelter.health <= 0) {
-      smelter.healthBar.height = smelter.baseHealth
+    if (machine.health <= 0) {
+      machine.healthBar.height = machine.baseHealth
       repairButton.visible = true
-      smelter.break()
+      machine.break()
     } else {
-      smelter.healthBar.height = healthDifference
-      smelter.running = false
-      smelter.readyBar.visible = true
+      machine.healthBar.height = healthDifference
+      machine.running = false
+      machine.readyBar.visible = true
     }
 
     eject()
     bCapacity.height = 300
-    smelter.capacity.f = smelter.capacity.originalF
+    machine.capacity.f = machine.capacity.originalF
   }
 }
 
@@ -103,12 +76,10 @@ let leftAmount, upAmount
 
 function eject() {
   if (leftAmount < leftSteps) {
-    
     leftAmount += 5
     space.x -= 5
     g.wait(1, eject)
   } else {
-    
     total = spaceValue - operationCost
     valueNum.content = spaceValue
     operationNum.content = operationCost
@@ -117,9 +88,9 @@ function eject() {
 
     data.currentCash = stats.currentCash
     data.repairCost = stats.repairCost
-    data.machineHealth = smelter.health
+    data.machineHealth = machine.health
 
-    localStorage[statsKey] = JSON.stringify(data)
+    LS[statsKey] = JSON.stringify(data)
 
     changeValue()
     g.wait(1500, moveUp)

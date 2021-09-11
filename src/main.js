@@ -1,28 +1,20 @@
 import { GA } from './modifiedGA.js'
-import { initCanvasEvents } from './initCanvas.js'
-import { initButtons } from './initButtons.js'
-import { initEquipments, smelter, space } from './initEquipments.js'
-import { elementsMoving } from './operations.js'
-import { initLeftDisplays } from './initLeftDisplays.js'
-import { initDeleteSaveWindow } from './initDeleteSaveWindow.js'
-import { loadSavedData } from './loadSavedData.js'
+import { loadSavedData, stats } from './Setup/loadSavedData.js'
+import { initCanvasEvents } from './Setup/initCanvas.js'
+import { initButtons } from './Setup/initButtons.js'
+import { initEquipments, machine, space } from './Setup/initEquipments.js'
+import { initLeftDisplays } from './Setup/initLeftDisplays.js'
+import { initDeleteSaveWindow } from './Setup/initDeleteSaveWindow.js'
+import { initLayers } from './Setup/initLayers.js'
+import { elementsMoving, fillBelt } from './operations.js'
 
-const bgImage = 'src/Untitled.jpg'
-export const statsKey = 'SpaceBarMakerJS13K2021'
-export const mainBelt = []
-export const maxStackSize = 10
-export const buttonsHeight = 580
-export const stats = {}
+export let g
 export const main = {
   action: true,
   process: false,
 }
 
-export let g
-export let objLayer, mainLayer, buttons = [], uiLayerText, uiLayerBG, buttonsLayer
-export let menu 
-
-g = GA.create(setup,[bgImage])
+g = GA.create(setup,['bg.jpg'])
 g.start()
 
 function setup(){
@@ -30,16 +22,11 @@ function setup(){
   loadSavedData()
 
   // Set background Image
-  g.sprite(bgImage)
+  g.sprite('bg.jpg')
 
   initCanvasEvents()
 
-  // Initialize Layers
-  objLayer = g.group()
-  uiLayerBG = g.group()
-  buttonsLayer = g.group()
-  uiLayerText = g.group()
-  mainLayer = g.group(uiLayerBG, objLayer, buttonsLayer, uiLayerText)
+  initLayers()
 
   initButtons()
 
@@ -49,11 +36,18 @@ function setup(){
 
   initDeleteSaveWindow()
 
+  fillBelt()
+
   g.state = play
   g.wait(100, () => stats.action = false)
 }
 
 function play(){
-  if ([elementsMoving, smelter.running, smelter.pushed, space.visible].every(v => v == false)) main.process = false 
+  if ([elementsMoving, machine.running, machine.pushed, space.visible].every(v => v == false)) main.process = false 
   else main.process = true
 }
+
+
+
+
+

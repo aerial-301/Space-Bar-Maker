@@ -1,12 +1,16 @@
-import { smelter } from "./initEquipments.js"
-import { buttonsHeight, g, main, mainBelt, maxStackSize } from "./main.js"
-import { elementsMoving, moveElements, insertElement } from "./operations.js"
-import { startSmelting, toBeSmelted } from './smelt.js'
+import { g, main } from "../main.js"
+import { startProcessing, toBeProcessed } from '../make.js'
+import { elementsMoving, moveElements, insertElement, maxStackSize, mainBelt } from "../operations.js"
+
+import { machine } from "./initEquipments.js"
+
+const products = []
+export const buttons = []
+export const buttonsHeight = 580
 
 export let repairButton
 export let stackSize = 0
 
-const products = []
 
 function buttonPress(b) {
   if(b.visible) {
@@ -22,7 +26,7 @@ export function initButtons() {
 
   const remove = g.simpleButton('🔻', 300, buttonsHeight + 10, 17, 37, () => {
     buttonPress(remove)
-    if (!elementsMoving && !smelter.pushed) {
+    if (!elementsMoving && !machine.pushed) {
       mainBelt.pop().visible = false
       moveElements(0)
       g.soundEffect(320, .1, "sine", 0.06, 113, false, 0, 0)
@@ -32,8 +36,8 @@ export function initButtons() {
   const push = g.simpleButton('⭡', 390, buttonsHeight - 60, 18, 24, () => {
     buttonPress(push)
     if (stackSize < 10) {
-      if (elementsMoving || smelter.push || smelter.running || !smelter.ready) return
-      smelter.pushed = true
+      if (elementsMoving || machine.push || machine.running || !machine.ready) return
+      machine.pushed = true
       stackSize += 1
       const item = mainBelt[mainBelt.length - 1]
       if (item.isMetal) g.soundEffect(200, .08, "triangle", 0.3, 300, true)
@@ -45,14 +49,14 @@ export function initButtons() {
     }
   }, 70, 80, 200)
   
-  const smelt = g.simpleButton('>', 310, 420, 23, 10, () => {
-    buttonPress(smelt)
+  const machineProcess = g.simpleButton('>', 310, 420, 23, 10, () => {
+    buttonPress(machineProcess)
     if (stackSize == maxStackSize) {
-      if (smelter.ready && !smelter.running) {
+      if (machine.ready && !machine.running) {
         g.soundEffect( 80, 1.2, "sawtooth", 0.03, 30, true, 0, 10)
-        smelter.running = true
-        products.forEach(p => toBeSmelted.push(p))
-        startSmelting()
+        machine.running = true
+        products.forEach(p => toBeProcessed.push(p))
+        startProcessing()
         stackSize = 0
         products.length = 0
       }
@@ -61,9 +65,12 @@ export function initButtons() {
 
 
   repairButton = g.simpleButton('🔧', 10, buttonsHeight - 150, 25, 15, () => {
-    if (!smelter.ready) smelter.fix()
+    if (!machine.ready) machine.fix()
     buttonPress(repairButton)
   }, 20, 80, 50)
 
   repairButton.visible = false
 }
+
+
+

@@ -1,7 +1,7 @@
 export const stats = {}
 export let data
 export let LS = localStorage
-export const statsKey = 'SpaceBarMaker2389JS13K2021'
+export const statsKey = 'SBM0JS13221'
 export function loadSavedData() {
     try {
       data = JSON.parse(LS[statsKey])

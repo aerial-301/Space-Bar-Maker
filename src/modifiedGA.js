@@ -1,4 +1,14 @@
-import { buttons, main, stats, buttonsLayer } from "./main.js"
+/*
+
+Modified version of the GA library https://github.com/kittykatattack/ga
+
+*/
+
+import { main } from "./main.js"
+import { stats } from "./Setup/loadSavedData.js"
+import { buttons } from "./Setup/initButtons.js"
+import { buttonsLayer } from "./Setup/initLayers.js"
+import { leftMouseDown, pointerDown } from "./mouse.js"
 
 export let GA = {
   create(setup, assetsToLoad) {
@@ -34,25 +44,14 @@ export let GA = {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       g.stage.children.forEach(c => displaySprite(c))
       function displaySprite(s) {
-
-        // if (s.alwaysVisible || s.visible && s.gx < canvas.width + s.width && s.gx + s.width >= -s.width && s.gy < canvas.height + s.height && s.gy + s.height >= -s.height) {
-        if (s.alwaysVisible || s.visible) {
+        if (s.visible) {
           ctx.save()
-          // if (g.interpolate) {
             if (s._previousX !== undefined) s.renderX = (s.x - s._previousX) * lagOffset + s._previousX
             else s.renderX = s.x
             if (s._previousY !== undefined) s.renderY = (s.y - s._previousY) * lagOffset + s._previousY
             else s.renderY = s.y
-          // } 
-          // else {
-          // s.renderX = s.x
-          // s.renderY = s.y
-          // }
           ctx.translate(s.renderX + (s.width * s.pivotX), s.renderY + (s.height * s.pivotY))
           ctx.globalAlpha = s.alpha
-          // ctx.rotate(s.rotation)
-          // ctx.scale(s.scaleX, s.scaleY)
-          // if (s.blendMode)  ctx.globalCompositeOperation = s.blendMode;
           if (s.render) s.render(ctx)
           if (s.children && s.children.length > 0) {
             ctx.translate(-s.width * s.pivotX, -s.height * s.pivotY)
@@ -100,7 +99,6 @@ export let GA = {
 
     function gameLoop(){
       requestAnimationFrame(gameLoop, g.canvas)
-
       update()
       if (main.process || main.action || (stats.currentCash != stats.displayedCash)) {
         g.render(g.canvas, 0)
@@ -202,13 +200,29 @@ export let GA = {
         o._y = (e.pageY - e.target.offsetTop)
         e.preventDefault()
       }
-      o.touchmoveHandler = function(event) {
-        o._x = (event.targetTouches[0].pageX - g.canvas.offsetLeft);
-        o._y = (event.targetTouches[0].pageY - g.canvas.offsetTop);
+
+      o.touchstartHandler = function(event) {
+        o._x = event.targetTouches[0].pageX - g.canvas.offsetLeft;
+        o._y = event.targetTouches[0].pageY - g.canvas.offsetTop;
+        leftMouseDown()
         event.preventDefault();
+      };
+
+      o.downHandler = function(event) {
+        o._x = (event.pageX - event.target.offsetLeft);
+        o._y = (event.pageY - event.target.offsetTop);
+        pointerDown(event)
+        event.preventDefault();
+      };
+
+      o.touchmoveHandler = function(e) {
+        o._x = (e.targetTouches[0].pageX - g.canvas.offsetLeft)
+        o._y = (e.targetTouches[0].pageY - g.canvas.offsetTop)
+        e.preventDefault()
       }
 
-      g.canvas.addEventListener("mousemove", o.moveHandler.bind(o), false)
+      g.canvas.addEventListener("mousedown", o.downHandler.bind(o), false)
+      g.canvas.addEventListener("touchstart", o.touchstartHandler.bind(o), false)
       g.canvas.addEventListener("touchmove", o.touchmoveHandler.bind(o), false)
       g.canvas.style.touchAction = "none"
       return o
@@ -425,9 +439,7 @@ export let GA = {
       const index = array.indexOf(item)
       if (index !== -1) array.splice(index, 1)
     }
-    g.addNewItem = (array, item) => {
-    if (array.findIndex(i => i == item) == -1) array.push(item)
-    }
+
     g.randomNum = (min, max, int = 1) => {
       const r = Math.random() * (max - min) + min
       return int ? r | 0 : r
@@ -436,7 +448,7 @@ export let GA = {
     g.assets = {
       toLoad: 0,
       loaded: 0,
-      imageExtensions: ["png", "jpg", "gif", "webp"],
+      imageExtensions: ["jpg"],
       whenLoaded: undefined,
   
       load: function(sources) {
