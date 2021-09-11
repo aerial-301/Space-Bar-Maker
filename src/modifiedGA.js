@@ -1,8 +1,17 @@
-import { buttons, main, stats, objLayer, buttonsLayer } from "./main.js"
-// import { buttons } from "./main/mainSetUp/initBottomPanel.js"
+/*
+
+Modified version of the GA library https://github.com/kittykatattack/ga
+
+*/
+
+import { main } from "./main.js"
+import { stats } from "./Setup/loadSavedData.js"
+import { buttons } from "./Setup/initButtons.js"
+import { buttonsLayer } from "./Setup/initLayers.js"
+import { leftMouseDown, pointerDown } from "./mouse.js"
 
 export let GA = {
-  create(setup) {
+  create(setup, assetsToLoad) {
     let g = {}
     g.canvas = document.getElementById('c')
     g.canvas.style.backgroundColor = '#555'
@@ -18,48 +27,31 @@ export let GA = {
     g._lag = 0
     g.interpolate = true
 
-    // g.setCanvasSize = () => {
-    //   g.canvas.width = window.innerWidth
-    //   g.canvas.height = window.innerHeight - 15
-    // }
-
-    // g.setCanvasSize()
-    // g.canvas.height = Math.min(g.canvas.width * 2.5, window.innerHeight)
-    // let scaleToFit = Math.min(g.canvas.width / window.innerWidth, g.canvas.height / window.innerHeight)
-    // // let scaleToFit = Math.min(window.innerWidth, window.innerHeight)
     let scaleToFit = Math.min(
       window.innerWidth / g.canvas.width, 
       window.innerHeight / g.canvas.height
     )
-    g.canvas.style.transformOrigin = "0 0";
-    g.canvas.style.transform = "scale(" + scaleToFit + ")";
+    g.canvas.style.transform = "scale(" + scaleToFit + ")"
+    const cMargin = (window.innerWidth - g.canvas.width * scaleToFit) / 2
+    g.canvas.style.margin = `0 ${cMargin}px`
     g.scale = scaleToFit
-    // g.scale = 1
+
+
+    g.assetFilePaths = assetsToLoad || undefined;
 
     g.render = (canvas, lagOffset) => {
       let ctx = canvas.ctx
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       g.stage.children.forEach(c => displaySprite(c))
       function displaySprite(s) {
-
-        // if (s.alwaysVisible || s.visible && s.gx < canvas.width + s.width && s.gx + s.width >= -s.width && s.gy < canvas.height + s.height && s.gy + s.height >= -s.height) {
-        if (s.alwaysVisible || s.visible) {
+        if (s.visible) {
           ctx.save()
-          // if (g.interpolate) {
             if (s._previousX !== undefined) s.renderX = (s.x - s._previousX) * lagOffset + s._previousX
             else s.renderX = s.x
             if (s._previousY !== undefined) s.renderY = (s.y - s._previousY) * lagOffset + s._previousY
             else s.renderY = s.y
-          // } 
-          // else {
-          // s.renderX = s.x
-          // s.renderY = s.y
-          // }
           ctx.translate(s.renderX + (s.width * s.pivotX), s.renderY + (s.height * s.pivotY))
           ctx.globalAlpha = s.alpha
-          // ctx.rotate(s.rotation)
-          // ctx.scale(s.scaleX, s.scaleY)
-          // if (s.blendMode)  ctx.globalCompositeOperation = s.blendMode;
           if (s.render) s.render(ctx)
           if (s.children && s.children.length > 0) {
             ctx.translate(-s.width * s.pivotX, -s.height * s.pivotY)
@@ -107,44 +99,28 @@ export let GA = {
 
     function gameLoop(){
       requestAnimationFrame(gameLoop, g.canvas)
-
       update()
       if (main.process || main.action || (stats.currentCash != stats.displayedCash)) {
-        // console.log(main.process, main.action)
         g.render(g.canvas, 0)
-        // g.render(g.canvas, 0)
       }
-      // if (!g._fps) {
-        // g.render(g.canvas, 0)
-      // }
-      // else {
-        // let current = Date.now(), elapsed = current - g._startTime
-        // if (elapsed > 1000) elapsed = g._frameDuration
-        // g._startTime = current
-        // g._lag += elapsed
-        // while (g._lag >= g._frameDuration) {
-        //   capturePreviousSpritePositions()
-        //   update()
-        //   g._lag -= g._frameDuration
-        // }
+    }
 
-        // if (stats.action || stats.process) {
-        //   g.render(g.canvas, g._lag / g._frameDuration)
-        //   // g.render(g.canvas, 0)
-        // }
-      // }
-    }
-    function capturePreviousSpritePositions(){
-      g.stage.children.forEach(s => setPosition(s))
-      function setPosition(s) {
-        s._previousX = s.x
-        s._previousY = s.y
-        if (s.children && s.children.length > 0) s.children.forEach(child => setPosition(child))
-      }
-    }
     function update() {if (g.state && !g.paused) g.state()}
     g.start = () => {
-      g.setup()
+      if (g.assetFilePaths) {
+        g.assets.whenLoaded = function() {
+          g.state = undefined
+          g.setup()
+        };
+        g.assets.load(g.assetFilePaths);
+        if (g.load) {
+          g.state = g.load
+        }
+      }
+
+      else {
+        g.setup()
+      }
       gameLoop()
     }
     g.pause = () => g.paused = true
@@ -218,97 +194,49 @@ export let GA = {
         halfHeight: { get: () => 0 },
         centerX: { get: () => o.x },
         centerY: { get: () => o.y },
-        // shiftedX: {get: () => o.x - world.x},
-        // shiftedY: {get: () => o.y - world.y}
       })
       o.moveHandler = function (e) {
         o._x = (e.pageX - e.target.offsetLeft)
         o._y = (e.pageY - e.target.offsetTop)
         e.preventDefault()
       }
-      o.touchmoveHandler = function(event) {
-        //Find the touch point's x and y position.
-        o._x = (event.targetTouches[0].pageX - g.canvas.offsetLeft);
-        o._y = (event.targetTouches[0].pageY - g.canvas.offsetTop);
+
+      o.touchstartHandler = function(event) {
+        o._x = event.targetTouches[0].pageX - g.canvas.offsetLeft;
+        o._y = event.targetTouches[0].pageY - g.canvas.offsetTop;
+        leftMouseDown()
         event.preventDefault();
+      };
+
+      o.downHandler = function(event) {
+        o._x = (event.pageX - event.target.offsetLeft);
+        o._y = (event.pageY - event.target.offsetTop);
+        pointerDown(event)
+        event.preventDefault();
+      };
+
+      o.touchmoveHandler = function(e) {
+        o._x = (e.targetTouches[0].pageX - g.canvas.offsetLeft)
+        o._y = (e.targetTouches[0].pageY - g.canvas.offsetTop)
+        e.preventDefault()
       }
 
-      g.canvas.addEventListener("mousemove", o.moveHandler.bind(o), false)
-
-      //Touch events.
-      // g.canvas.addEventListener("touchstart", o.touchstartHandler.bind(o), false)
+      g.canvas.addEventListener("mousedown", o.downHandler.bind(o), false)
+      g.canvas.addEventListener("touchstart", o.touchstartHandler.bind(o), false)
       g.canvas.addEventListener("touchmove", o.touchmoveHandler.bind(o), false)
-
-      //Add a `touchend` event to the `window` object as well to
-      //catch a mouse button release outside of the canvas area.
-      // window.addEventListener("touchend", o.upHandler.bind(o), false)
-
-      //Disable the default pan and zoom actions on the `canvas`.
       g.canvas.style.touchAction = "none"
-
-
       return o
     }
 
-
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     g.wait = (d, c) => setTimeout(c, d)
-
-    g.hitTestRectangle = (r1, r2, global = false) => {
-      let hit, vx, vy
-      if (global) {
-        vx = (r1.gx + r1.halfWidth) - (r2.gx + r2.halfWidth)
-        vy = (r1.gy + r1.halfHeight) - (r2.gy + r2.halfHeight)
-      }
-      else {
-        vx = r1.centerX - r2.centerX
-        vy = r1.centerY - r2.centerY
-      }
-
-      if (Math.abs(vx) < r1.halfWidth + r2.halfWidth) {
-        if (Math.abs(vy) < r1.halfHeight + r2.halfHeight) {
-          hit = true
-        }
-        else {
-          hit = false
-        }
-      }
-      else {
-        hit = false
-      }
-      return hit
-    }
 
     g.hitTestPoint = function (p, s) {
       if (p.x < s.gx || p.x > s.gx + s.width || p.y < s.gy || p.y > s.gy + s.height) return false
       return true
     }
 
-    // g.GlobalDistance = (a, b, aOffX = 0, aOffY = 0) => {return Math.sqrt( ( b.centerX - a.centerX + aOffX)**2 + ( b.centerY - a.centerY + aOffY)**2 )}
-    
     g.actx = new AudioContext()
-    g.soundEffect = function(frequencyValue, decay, type, volumeValue, pitchBendAmount, reverse, randomValue) {
+    g.soundEffect = function(frequencyValue, decay, type, volumeValue, pitchBendAmount, reverse, randomValue, diss, attack = 0, reverb = 0) {
       let actx = g.actx
       let oscillator, volume, compressor
 
@@ -335,67 +263,107 @@ export let GA = {
       fadeIn(volume)
       fadeOut(volume)
       if (pitchBendAmount > 0) pitchBend(oscillator)
+      if (reverb) addReverb(volume);
+      if (diss) addDissonance()
 
       play(oscillator)
-      oscillator.stop(actx.currentTime + 0.5);
+      oscillator.stop(actx.currentTime + 1);
 
       function fadeIn(volumeNode) {
         volumeNode.gain.value = 0;
         volumeNode.gain.linearRampToValueAtTime(
-          0, actx.currentTime
+          0, actx.currentTime + attack
         );
         volumeNode.gain.linearRampToValueAtTime(
-          volumeValue, actx.currentTime + 0.05
+          volumeValue, actx.currentTime + attack
         );
       }
 
       function fadeOut(volumeNode) {
-        volumeNode.gain.linearRampToValueAtTime(volumeValue, actx.currentTime)
-        volumeNode.gain.linearRampToValueAtTime(0, actx.currentTime + decay)
+        volumeNode.gain.linearRampToValueAtTime(volumeValue, actx.currentTime + attack)
+        volumeNode.gain.linearRampToValueAtTime(0, actx.currentTime + decay + attack)
       }
 
       function pitchBend(oscillatorNode) {
         var frequency = oscillatorNode.frequency.value
         if (!reverse) {
           oscillatorNode.frequency.linearRampToValueAtTime(frequency, actx.currentTime)
-          oscillatorNode.frequency.linearRampToValueAtTime(frequency - pitchBendAmount, actx.currentTime + decay)
+          oscillatorNode.frequency.linearRampToValueAtTime(frequency - pitchBendAmount, actx.currentTime + decay + attack)
         }
 
         else {
           oscillatorNode.frequency.linearRampToValueAtTime(frequency, actx.currentTime)
-          oscillatorNode.frequency.linearRampToValueAtTime(frequency + pitchBendAmount, actx.currentTime + decay)
+          oscillatorNode.frequency.linearRampToValueAtTime(frequency + pitchBendAmount, actx.currentTime + decay + attack)
         }
+      }
+
+      function addDissonance() {
+        var d1 = actx.createOscillator(),
+            d2 = actx.createOscillator(),
+            d1Volume = actx.createGain(),
+            d2Volume = actx.createGain()
+  
+        d1Volume.gain.value = volumeValue;
+        d2Volume.gain.value = volumeValue;
+        d1.connect(d1Volume);
+        d1Volume.connect(actx.destination);
+        d2.connect(d2Volume);
+        d2Volume.connect(actx.destination);
+        d1.type = "sawtooth";
+        d2.type = "sawtooth";
+        d1.frequency.value = frequency + diss;
+        d2.frequency.value = frequency - diss;
+  
+        if (attack > 0) {
+          fadeIn(d1Volume);
+          fadeIn(d2Volume);
+        }
+        if (decay > 0) {
+          fadeOut(d1Volume);
+          fadeOut(d2Volume);
+        }
+        if (pitchBendAmount > 0) {
+          pitchBend(d1);
+          pitchBend(d2);
+        }
+        if (reverb) {
+          addReverb(d1Volume);
+          addReverb(d2Volume);
+        }
+        play(d1);
+        play(d2);
+      }
+
+      function impulseResponse (duration, decay, reverse, actx) {
+        var length = actx.sampleRate * duration;
+        var impulse = actx.createBuffer(2, length, actx.sampleRate);
+        var left = impulse.getChannelData(0),
+            right = impulse.getChannelData(1)
+        for (var i = 0; i < length; i++){
+          var n;
+          if (reverse) {
+            n = length - i;
+          } else {
+            n = i;
+          }
+          left[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
+          right[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
+        }
+
+        return impulse;
+      }
+
+      function addReverb(volumeNode) {
+        var convolver = actx.createConvolver();
+        convolver.buffer = impulseResponse(reverb[0], reverb[1], reverb[2], actx);
+        volumeNode.connect(convolver);
+        convolver.connect(compressor);
       }
 
       function play(node) {
         node.start(actx.currentTime);
       }
 
-    }
-
-    let 
-      BP = (c) => c.beginPath(),
-      MT = (c, x, y) => c.moveTo(x, y),
-      SK = (c) => c.stroke(),
-      FL = (c) => c.fill(),
-      L = (c, x, y) => c.lineTo(x, y),
-      FR = (c, x, y, w, h) => c.fillRect(x, y, w, h)
-
-    g.circle = (d, k, l, x = 0, y = 0) => {
-      const o = {
-        f: k,
-        radius: d / 2 
-      }
-      o.render = (c) => {
-        c.lineWidth = l
-        c.fillStyle = o.f
-        BP(c)
-        c.arc(o.radius + (-o.radius * 2 * o.pivotX), o.radius + (-o.radius * 2 * o.pivotY), o.radius, 0, 2 * PI, false)
-        if (l) SK()
-        FL(c)
-      }
-      makeBasicObject(o, x, y, d, d)
-      return o
     }
 
     g.rectangle = (w, h, k = '#FFF', s = 1, x = 0, y = 0) => {
@@ -405,36 +373,20 @@ export let GA = {
         width: w,
         height: h,
         f: k,
+        originalF: k
       }
       o.render = (c) => {
         c.lineWidth = s
         c.fillStyle = o.f
-        BP(c)
-        MT(c, x, y)
+        c.beginPath()
+        c.moveTo(x, y)
         c.rect(-o.width * o.pivotX, -o.height * o.pivotY, o.width, o.height)
-        FL(c)
-        if (s) SK(c)
+        c.fill()
+        if (s) c.stroke()
       }
       makeBasicObject(o, x, y, w, h)
       return o
     }
-
-    // function moreProperties(o){
-    //   o.target = null
-    //   o.attacked = false,
-    //   o.isDamaged = false
-    //   o.isDead = false
-    //   o.damagedAmount = 0
-    //   o.HBscale = 0.5
-    //   o.yellowHB = g.rectangle((o.health / o.baseHealth) * 100 * o.HBscale, 5, 'Yellow')
-    //   o.addChild(o.yellowHB)
-    //   o.yellowHB.y = -10
-    //   o.HB = g.rectangle((o.health / o.baseHealth) * 100 * o.HBscale, 5, 'green')
-    //   o.addChild(o.HB)
-    //   o.HB.y = -10
-    //   o.HB.visible = false
-    //   o.yellowHB.visible = false
-    // }
 
     g.makeText = (parent, content, fontSize, fillStyle, x = 0, y = 0) => {
       const o = {
@@ -471,7 +423,6 @@ export let GA = {
       ) => {
 
       const button = g.rectangle(width, height, color, 1, x, y)
-
       button.oColor = color
 
       if (action) {
@@ -479,50 +430,94 @@ export let GA = {
         button.action = action
       }
 
-      if (text) {
-        button.text = g.makeText(button, text, size, '#FFF', textX, textY)
-      }
-        
-      // uiElements.push(button)
+      if (text) button.text = g.makeText(button, text, size, '#FFF', textX, textY)  
       buttonsLayer.addChild(button)
       return button
     }
-    // g.xDistance = (a, b) => Math.abs(b.centerX - a.centerX)
-    // g.yDistance = (a, b) => Math.abs(b.centerY - a.centerY)
-    // g.addVectors = (a, b) => {return [a[0] + b[0], a[1] + b[1]]}
+
     g.removeItem = (array, item) => {
       const index = array.indexOf(item)
       if (index !== -1) array.splice(index, 1)
     }
-    g.addNewItem = (array, item) => {
-    if (array.findIndex(i => i == item) == -1) array.push(item)
-    }
+
     g.randomNum = (min, max, int = 1) => {
       const r = Math.random() * (max - min) + min
       return int ? r | 0 : r
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    g.assets = {
+      toLoad: 0,
+      loaded: 0,
+      imageExtensions: ["jpg"],
+      whenLoaded: undefined,
+  
+      load: function(sources) {
+        var self = this;
+        self.toLoad = sources.length;
+        sources.forEach(function(source) {
+          var extension = source.split('.').pop();
+          if (self.imageExtensions.indexOf(extension) !== -1) {
+            var image = new Image();
+            image.addEventListener("load", function() {
+              image.name = source;
+              self[image.name] = {
+                source: image,
+                frame: {
+                  x: 0,
+                  y: 0,
+                  w: image.width,
+                  h: image.height
+                }
+              };
+              self.loadHandler();
+            }, false);
+            image.src = source;
+          }
+        });
+      },
+  
+      loadHandler: function() {
+        var self = this;
+        self.loaded += 1;
+        if (self.toLoad === self.loaded) {
+          self.toLoad = 0;
+          self.loaded = 0;
+          self.whenLoaded();
+        }
+      }
+    }
+    
+    g.sprite = function(source) {
+      var o = {}
+      makeBasicObject(o)
+      o.setTexture = function(source) {
+        o.tilesetFrame = g.assets[source]
+        o.source = o.tilesetFrame.source
+        o.sourceX = o.tilesetFrame.frame.x
+        o.sourceY = o.tilesetFrame.frame.y
+        o.width = o.tilesetFrame.frame.w
+        o.height = o.tilesetFrame.frame.h
+        o.sourceWidth = o.tilesetFrame.frame.w
+        o.sourceHeight = o.tilesetFrame.frame.h
+      }
+      o.setTexture(source)
+      o.x = 0
+      o.y = 0
+      g.stage.addChild(o)
+      o.render = function(ctx) {
+        ctx.drawImage(
+          o.source,
+          o.sourceX, o.sourceY,
+          o.sourceWidth, o.sourceHeight, -o.width * o.pivotX, -o.height * o.pivotY,
+          o.width, o.height
+        )
+      }
+      return o
+    }
 
     return g
   }
 }
+
+
+

@@ -1,11 +1,17 @@
-import { bCapacity, smelter } from "./initEquipments.js"
-import { buttons, g, mainBelt, objLayer, uiLayerBG } from "./main.js"
+import { g } from "./main.js"
+import { buttonsHeight, stackSize } from "./Setup/initButtons.js"
+import { bCapacity, machine } from "./Setup/initEquipments.js"
+import { uiLayerBG } from "./Setup/initLayers.js"
+
+export const maxStackSize = 10
+const moveSteps = 5
+const beltSize = 6
+const beltStartX = -50
 
 const objects = [
   '📌',
   '📏',
   '📼',
-  // '🔧',
   '📞',
   '🛒',
   '📢',
@@ -31,27 +37,18 @@ const nonSolids = [
   '🐁',
 ]
 
-const uiStuff = [
-  '💰',
-  '💵',
-  '⭐'
-]
-
 const movingElements = []
-// const maxShift = 25
 
+export const mainBelt = []
 export const blockSize = 60
 
-const moveSteps = 5
 let shiftAmount = 0
-let inserted = 0
 let randomElement
 let index, damage
 export let elementsMoving = false
-// export let smelter.pushed = false
 
 export function removeElement(n) {
-  if (!elementsMoving && !smelter.pushed) {
+  if (!elementsMoving && !machine.pushed) {
     const index = mainBelt.length - n
     const item = mainBelt[index]
     if (item) {
@@ -61,21 +58,26 @@ export function removeElement(n) {
   }
 }
 
-export function addElement(x = 10, y = buttons[0].y - 50) {
+let isMetal
+
+export function addElement(x = beltStartX, y = buttonsHeight - 50) {
   if (Math.random() > .5) {
     index = g.randomNum(0, objects.length)
     randomElement = objects[index]
+    isMetal = true
     index += 1
-    damage = 1
+    damage = g.randomNum(1, 7)
   } else {
     index = g.randomNum(0, nonSolids.length)
     randomElement = nonSolids[index]
+    isMetal = false
     damage = (index + 1) * 10
     index = 0
   }
   const t = g.makeText(uiLayerBG, randomElement, 40, 0, x, y)
   t.value = index * 15
   t.damage = damage
+  t.isMetal = isMetal
   
   mainBelt.unshift(t)
 }
@@ -97,7 +99,6 @@ export function moveElements(n = 0) {
 const insertFinal = 80
 const insertSteps = 10
 let insertAmount = 0
-// let insertMoved = false
 
 export function insertElement(item) {
   item.y -= insertSteps
@@ -108,41 +109,35 @@ export function insertElement(item) {
     insertAmount = 0
     item.visible = false
     bCapacity.height -= 30
+    if (stackSize == maxStackSize) {
+      machine.capacity.f = machine.capacity.full
+    }
   }
 }
 
 function moveElementsNOW() {
-    for (const item of movingElements) {
-      item.x += moveSteps
-    }
-    shiftAmount += moveSteps
-    if (shiftAmount < blockSize) {
-      g.wait(1, () => moveElementsNOW())
-      
-    } else {
-      shiftAmount = 0
-      
-      addElement()
-      // if (smelter.pushed) {
-      //   if (inserted < 2) {
-      //     inserted += 1
-      //     movingElements.push(mainBelt[0])
-      //     moveElementsNOW()
-      //   } else {
-      //     inserted = 0
-      //     elementsMoving = false
-      //     movingElements.length = 0
-      //     g.wait(7, () => smelter.pushed = false)
-          
-      //   }
-      // } else {
-        movingElements.length = 0
-        g.wait(7, () => {
-          elementsMoving = false
-          smelter.pushed = false
-        })
-      // }
-    }
-    
-  // }
+  for (const item of movingElements) {
+    item.x += moveSteps
+  }
+  shiftAmount += moveSteps
+  if (shiftAmount < blockSize) {
+    g.wait(1, () => moveElementsNOW())
+    return
+  } else {
+    shiftAmount = 0
+    addElement()
+    movingElements.length = 0
+    g.wait(7, () => {
+      elementsMoving = false
+      machine.pushed = false
+    })
+  }
+}
+
+
+export function fillBelt() {
+  // Fill belt with items at game start
+  for (let i = 0; i <= beltSize; i++) {
+    addElement(beltStartX + (blockSize * (beltSize - i)))
+  }
 }
